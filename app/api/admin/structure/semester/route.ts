@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const years = await getYearsByDegree(degreeRecord.id);
     const yearMatch = year.match(/Year\s+(\d+)/i);
     const yearNumber = yearMatch ? parseInt(yearMatch[1]) : 1;
-    const yearRecord = years.find((y) => y.number === yearNumber);
+    const yearRecord = years.find((y: any) => y.number === yearNumber);
 
     if (!yearRecord) {
       return NextResponse.json(
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     const semesterMatch = semesterName.match(/Semester\s+(\d+)/i);
     const semesterNumber = semesterMatch ? parseInt(semesterMatch[1]) : 1;
 
-    if (existingSemesters.some((s) => s.number === semesterNumber)) {
+    if (existingSemesters.some((s: any) => s.number === semesterNumber)) {
       return NextResponse.json(
         { success: false, error: "Semester already exists" },
         { status: 400 },
