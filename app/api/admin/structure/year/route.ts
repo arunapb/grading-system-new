@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     const yearMatch = yearName.match(/Year\s+(\d+)/i);
     const yearNumber = yearMatch ? parseInt(yearMatch[1]) : 1;
 
-    if (existingYears.some((y) => y.number === yearNumber)) {
+    if (existingYears.some((y: any) => y.number === yearNumber)) {
       return NextResponse.json(
         { success: false, error: "Year already exists" },
         { status: 400 },
