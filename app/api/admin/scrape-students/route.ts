@@ -75,7 +75,8 @@ export async function POST(request: Request) {
               `Failed to upload photo for ${student.indexNumber}:`,
               uploadError,
             );
-            // Keep original URL if upload fails
+            // Don't save original URL if upload fails (as per user request)
+            finalPhotoUrl = null;
           }
         }
 
