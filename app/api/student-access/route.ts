@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     const forwardedFor = request.headers.get("x-forwarded-for");
     const ipAddress = forwardedFor
       ? forwardedFor.split(",")[0].trim()
-      : request.headers.get("x-real-ip") || "Unknown";
+      : request.headers.get("x-real-ip") || (request as any).ip || "Unknown";
     const userAgent = request.headers.get("user-agent") || "Unknown";
     const { device, os, browser } = parseUserAgent(userAgent);
 

@@ -385,52 +385,63 @@ export default function InvitationsPage() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {inv.useCount > 0 && inv.lastIpAddress ? (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center gap-2 cursor-pointer">
-                                <Monitor className="h-4 w-4 text-blue-500" />
-                                <span className="text-sm">
-                                  {inv.lastDevice}/{inv.lastOs}
-                                </span>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <div className="space-y-1 text-xs">
-                                <div className="flex items-center gap-1">
-                                  <Globe className="h-3 w-3" />
-                                  <span className="font-semibold">
-                                    IP:
-                                  </span>{" "}
-                                  {inv.lastIpAddress}
+                      {inv.useCount > 0 ? (
+                        inv.lastIpAddress ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-2 cursor-pointer">
+                                  <Monitor className="h-4 w-4 text-blue-500" />
+                                  <span className="text-sm">
+                                    {inv.lastDevice || "Unknown"} /{" "}
+                                    {inv.lastOs || "Unknown"}
+                                  </span>
                                 </div>
-                                <div>
-                                  <span className="font-semibold">
-                                    Browser:
-                                  </span>{" "}
-                                  {inv.lastBrowser}
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <div className="space-y-1 text-xs">
+                                  <div className="flex items-center gap-1">
+                                    <Globe className="h-3 w-3" />
+                                    <span className="font-semibold">
+                                      IP:
+                                    </span>{" "}
+                                    {inv.lastIpAddress}
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold">
+                                      Browser:
+                                    </span>{" "}
+                                    {inv.lastBrowser || "Unknown"}
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold">
+                                      Device:
+                                    </span>{" "}
+                                    {inv.lastDevice || "Unknown"}
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold">OS:</span>{" "}
+                                    {inv.lastOs || "Unknown"}
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold">
+                                      Accessed:
+                                    </span>{" "}
+                                    {inv.accessedAt
+                                      ? new Date(
+                                          inv.accessedAt,
+                                        ).toLocaleString()
+                                      : "N/A"}
+                                  </div>
                                 </div>
-                                <div>
-                                  <span className="font-semibold">Device:</span>{" "}
-                                  {inv.lastDevice}
-                                </div>
-                                <div>
-                                  <span className="font-semibold">OS:</span>{" "}
-                                  {inv.lastOs}
-                                </div>
-                                <div>
-                                  <span className="font-semibold">
-                                    Accessed:
-                                  </span>{" "}
-                                  {inv.accessedAt
-                                    ? new Date(inv.accessedAt).toLocaleString()
-                                    : "N/A"}
-                                </div>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <span className="text-sm text-yellow-600">
+                            Used (No IP)
+                          </span>
+                        )
                       ) : (
                         <span className="text-muted-foreground text-sm">
                           Not accessed
