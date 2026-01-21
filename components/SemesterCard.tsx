@@ -67,7 +67,7 @@ export function SemesterCard({ semester }: SemesterCardProps) {
               <p
                 className={`text-2xl font-semibold tabular-nums ${getGPAColor(semester.sgpa)}`}
               >
-                {semester.sgpa.toFixed(4)}
+                {semester.sgpa.toFixed(2)}
               </p>
             </div>
             <Button

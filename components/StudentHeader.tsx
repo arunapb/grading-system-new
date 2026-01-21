@@ -87,7 +87,7 @@ export function StudentHeader({
             <p
               className={`text-4xl font-bold tabular-nums ${getGPAColor(cgpa)}`}
             >
-              {cgpa.toFixed(4)}
+              {cgpa.toFixed(2)}
             </p>
           </div>
         </div>

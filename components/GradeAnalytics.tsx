@@ -21,7 +21,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { ModuleGrade } from "@/lib/gpa-calculator";
-import { gradeToPoints } from "@/lib/gpa-calculator";
+import {
+  gradeToPoints,
+  ORDERED_GRADES,
+  getGradePriority,
+} from "@/lib/gpa-calculator";
 
 interface GradeAnalyticsProps {
   modules: ModuleGrade[];
@@ -44,24 +48,6 @@ export function GradeAnalytics({ modules, semesters }: GradeAnalyticsProps) {
     {} as Record<string, number>,
   );
 
-  // Fixed grade order for display
-  const ORDERED_GRADES = [
-    "A+",
-    "A",
-    "A-",
-    "B+",
-    "B",
-    "B-",
-    "C+",
-    "C",
-    "C-",
-    "D+",
-    "D",
-    "E",
-    "I",
-    "F",
-  ];
-
   const gradeDistributionData = ORDERED_GRADES.filter(
     (grade) => gradeDistribution[grade] > 0,
   ).map((grade) => ({
@@ -73,18 +59,18 @@ export function GradeAnalytics({ modules, semesters }: GradeAnalyticsProps) {
   // SGPA progression over semesters
   const sgpaProgressionData = semesters.map((sem) => ({
     name: `Y${sem.year} S${sem.semester}`,
-    sgpa: parseFloat(sem.sgpa.toFixed(4)),
+    sgpa: parseFloat(sem.sgpa.toFixed(2)),
     credits: sem.credits,
   }));
 
   // Top performing modules (A+, A, A-)
   const topPerformingModules = modules
     .filter((m) => ["A+", "A", "A-"].includes(m.grade))
-    .sort((a, b) => gradeToPoints(b.grade) - gradeToPoints(a.grade));
+    .sort((a, b) => getGradePriority(b.grade) - getGradePriority(a.grade));
 
-  // All modules sorted by grade point for "Best Grade" calculation
+  // All modules sorted by grade priority for "Best Grade" calculation
   const sortedModules = [...modules].sort(
-    (a, b) => gradeToPoints(b.grade) - gradeToPoints(a.grade),
+    (a, b) => getGradePriority(b.grade) - getGradePriority(a.grade),
   );
 
   // Colors for charts
@@ -255,7 +241,7 @@ export function GradeAnalytics({ modules, semesters }: GradeAnalyticsProps) {
               {(
                 modules.reduce((sum, m) => sum + gradeToPoints(m.grade), 0) /
                 modules.length
-              ).toFixed(4)}
+              ).toFixed(2)}
             </div>
           </CardContent>
         </Card>
