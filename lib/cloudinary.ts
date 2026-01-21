@@ -17,8 +17,6 @@ export interface UploadResult {
  */
 import axios from "axios";
 
-// ... existing imports ...
-
 /**
  * Upload an image to Cloudinary from a URL
  */
