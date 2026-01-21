@@ -37,7 +37,10 @@ import {
 import { useBatches } from "@/hooks/batch.hooks";
 import { useStudents } from "@/hooks/student.hooks";
 
+import { useRouter } from "next/navigation";
+
 export default function StudentsPage() {
+  const router = useRouter();
   const [selectedBatch, setSelectedBatch] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"cgpa" | "name" | "credits">("cgpa");
@@ -281,7 +284,13 @@ export default function StudentsPage() {
                   {filteredStudents.map((student) => {
                     const prediction = getClassPrediction(student.cgpa);
                     return (
-                      <TableRow key={student.indexNumber}>
+                      <TableRow
+                        key={student.indexNumber}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() =>
+                          router.push(`/admin/students/${student.id}`)
+                        }
+                      >
                         <TableCell className="font-mono text-sm">
                           {student.indexNumber}
                         </TableCell>

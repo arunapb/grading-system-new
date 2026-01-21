@@ -52,7 +52,12 @@ import {
   AdminUser,
 } from "@/hooks/admin.hooks";
 
+import { useSession } from "next-auth/react";
+
 export default function AdminsPage() {
+  const { data: session } = useSession();
+  const isSuperAdmin = (session?.user as any)?.role === "SUPER_ADMIN";
+
   const { data: admins, isLoading } = useAdmins();
   const createAdmin = useCreateAdmin();
   const updateAdmin = useUpdateAdmin();
@@ -212,14 +217,16 @@ export default function AdminsPage() {
             Create, manage, and control administrator accounts
           </p>
         </div>
-        <Button
-          onClick={() => setShowCreateDialog(true)}
-          className="gap-2"
-          size="lg"
-        >
-          <UserPlus className="h-5 w-5" />
-          Create Admin
-        </Button>
+        {isSuperAdmin && (
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            className="gap-2"
+            size="lg"
+          >
+            <UserPlus className="h-5 w-5" />
+            Create Admin
+          </Button>
+        )}
       </div>
 
       {/* Admins Table */}
@@ -307,7 +314,7 @@ export default function AdminsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        {admin.role !== "SUPER_ADMIN" && (
+                        {isSuperAdmin && admin.role !== "SUPER_ADMIN" && (
                           <div className="flex items-center justify-end gap-1">
                             <Button
                               variant="ghost"

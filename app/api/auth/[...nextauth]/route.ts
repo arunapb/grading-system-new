@@ -2,6 +2,7 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { validateStudent, validateLecturer, validateAdmin } from "@/lib/auth";
 import { logActivity } from "@/lib/db/activity.service";
+import { headers } from "next/headers";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -167,12 +168,19 @@ export const authOptions: NextAuthOptions = {
       const userType = (user as any).type;
       const role = (user as any).role;
 
+      const headersList = await headers();
+      const userAgent = headersList.get("user-agent") || "Unknown";
+      const forwardedFor = headersList.get("x-forwarded-for");
+      const ip = forwardedFor ? forwardedFor.split(",")[0] : "Unknown";
+
       await logActivity("USER_LOGIN", {
         userId: user.id,
         userName: user.name,
         userType: userType,
         role: role || userType, // For admins use role, for others use type
         provider: account?.provider,
+        userAgent,
+        ip,
         timestamp: new Date().toISOString(),
       });
     },

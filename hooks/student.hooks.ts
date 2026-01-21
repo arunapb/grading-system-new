@@ -52,6 +52,7 @@ export function useStudent(id: string, batch?: string, degree?: string) {
 }
 
 interface StudentSummary {
+  id: string; // Added id for navigation
   indexNumber: string;
   rank: number;
   name: string | null;
@@ -112,5 +113,24 @@ export function useStudentsWithCGPA(batch?: string, degree?: string) {
       return data.students || data;
     },
     enabled: !!batch && !!degree,
+  });
+}
+
+export function useAdminStudent(id: string) {
+  return useQuery({
+    queryKey: ["admin-student", id],
+    queryFn: async () => {
+      const url = `/api/admin/students/${id}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Failed to fetch student details");
+      }
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to fetch student details");
+      }
+      return data.student;
+    },
+    enabled: !!id,
   });
 }
