@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "StudentInvitation" ADD COLUMN     "maxUses" INTEGER NOT NULL DEFAULT 1,
+ADD COLUMN     "useCount" INTEGER NOT NULL DEFAULT 0;

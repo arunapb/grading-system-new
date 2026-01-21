@@ -1,0 +1,44 @@
+[
+  {
+    "timestamp": "2026-01-21T04:46:25.850Z",
+    "action": "PDF_UPLOADED",
+    "details": {
+      "filename": "IN3410_Data Mining and Data Warehousing_IT_Intake 2021_Semester 6_student_view.pdf",
+      "batch": "Batch 21",
+      "degree": "IT",
+      "year": "Year 3",
+      "semester": "Semester 2",
+      "parsed": true,
+      "studentCount": 230
+    },
+    "success": true
+  },
+  {
+    "timestamp": "2026-01-09T04:30:50.311Z",
+    "action": "PDF_UPLOADED",
+    "details": {
+      "filename": "IS3450 _Business and Entrepreneurship_Intake 2021_Semester 6_student_view.pdf",
+      "batch": "batch 21",
+      "degree": "IT",
+      "year": "Year 3",
+      "semester": "Semester 2",
+      "parsed": true,
+      "studentCount": 230
+    },
+    "success": true
+  },
+  {
+    "timestamp": "2026-01-07T16:11:12.202Z",
+    "action": "PDF_UPLOADED",
+    "details": {
+      "filename": "IT.pdf",
+      "batch": "batch 21",
+      "degree": "IT",
+      "year": "Year 3",
+      "semester": "Semester 2",
+      "parsed": true,
+      "studentCount": 230
+    },
+    "success": true
+  }
+]

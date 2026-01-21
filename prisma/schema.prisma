@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Batch {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  degrees   Degree[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Degree {
+  id        String    @id @default(cuid())
+  name      String
+  batch     Batch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batchId   String
+  years     Year[]
+  students  Student[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([name, batchId])
+}
+
+model Year {
+  id        String     @id @default(cuid())
+  name      String // e.g., "Year 1", "Year 2", "Year 3", "Year 4"
+  number    Int // 1, 2, 3, 4
+  degree    Degree     @relation(fields: [degreeId], references: [id], onDelete: Cascade)
+  degreeId  String
+  semesters Semester[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([number, degreeId])
+}
+
+model Semester {
+  id        String   @id @default(cuid())
+  name      String // e.g., "Semester 1", "Semester 2"
+  number    Int // 1 or 2
+  year      Year     @relation(fields: [yearId], references: [id], onDelete: Cascade)
+  yearId    String
+  modules   Module[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([number, yearId])
+}
+
+model Module {
+  id         String         @id @default(cuid())
+  code       String
+  name       String
+  credits    Float
+  semester   Semester       @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  semesterId String
+  grades     StudentGrade[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([code, semesterId])
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+}
+
+enum AccountStatus {
+  PENDING
+  APPROVED
+  BLOCKED
+}
+
+model Admin {
+  id               String        @id @default(cuid())
+  username         String        @unique
+  password         String
+  name             String
+  role             Role          @default(ADMIN)
+  status           AccountStatus @default(APPROVED)
+  verificationCode String? // 6-digit OTP for setup/reset
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model Student {
+  id          String              @id @default(cuid())
+  indexNumber String
+  name        String?
+  photoUrl    String?
+  status      AccountStatus       @default(PENDING)
+  degree      Degree              @relation(fields: [degreeId], references: [id], onDelete: Cascade)
+  degreeId    String
+  grades      StudentGrade[]
+  invitations StudentInvitation[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([indexNumber, degreeId])
+}
+
+model StudentGrade {
+  id          String   @id @default(cuid())
+  grade       String
+  gradePoints Float
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId   String
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([studentId, moduleId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String // e.g., "PDF_UPLOADED", "STUDENT_VIEWED"
+  details   Json // Flexible JSON for action-specific details
+  success   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([createdAt])
+}
+
+model StudentInvitation {
+  id           String    @id @default(cuid())
+  code         String    @unique // 6-character alphanumeric code
+  student      Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId    String
+  expiresAt    DateTime // When the invitation expires
+  maxUses      Int       @default(1) // Maximum number of times link can be used
+  useCount     Int       @default(0) // Current number of uses
+  accessedAt   DateTime? // When the student first accessed
+  // Access tracking
+  lastIpAddress String?   // IP address of the accessor
+  lastUserAgent String?   // Full user agent string
+  lastDevice    String?   // Device type (Desktop, Mobile, Tablet)
+  lastOs        String?   // Operating system (Windows, macOS, Linux, iOS, Android)
+  lastBrowser   String?   // Browser name (Chrome, Firefox, Safari, etc.)
+  createdAt    DateTime  @default(now())
+
+  @@index([code])
+  @@index([expiresAt])
+}
