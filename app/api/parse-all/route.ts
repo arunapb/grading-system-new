@@ -31,7 +31,8 @@ export async function POST(req: NextRequest) {
         const pdfBuffer = fs.readFileSync(fullPdfPath);
 
         // Parse PDF
-        const records = await parseResultPDF(pdfBuffer);
+        const pdfResult = await parseResultPDF(pdfBuffer);
+        const { records } = pdfResult;
 
         // Get output path
         const outputPath = getOutputPath(dataDir, pdf.pdfPath);
@@ -39,8 +40,8 @@ export async function POST(req: NextRequest) {
         // Ensure output directory exists
         ensureOutputDirectory(outputPath);
 
-        // Save JSON
-        fs.writeFileSync(outputPath, JSON.stringify(records, null, 2));
+        // Save JSON (including metadata)
+        fs.writeFileSync(outputPath, JSON.stringify(pdfResult, null, 2));
 
         results.push({
           pdfPath: pdf.pdfPath,

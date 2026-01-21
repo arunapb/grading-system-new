@@ -1,6 +1,28 @@
 import prisma from "./prisma";
 import { gradeToPoints } from "../gpa-calculator";
 
+export async function findStudentsByIndexNumbers(
+  indexNumbers: string[],
+  degreeId: string,
+) {
+  return prisma.student.findMany({
+    where: {
+      degreeId,
+      indexNumber: { in: indexNumbers },
+    },
+    select: { id: true, indexNumber: true, name: true },
+  });
+}
+
+export async function bulkCreateStudents(
+  students: { indexNumber: string; degreeId: string; name?: string }[],
+) {
+  return prisma.student.createMany({
+    data: students,
+    skipDuplicates: true,
+  });
+}
+
 export async function findOrCreateStudent(
   indexNumber: string,
   degreeId: string,
@@ -238,13 +260,18 @@ export async function getStudentDetails(
   const rank = allStudents.findIndex((s) => s.indexNumber === indexNumber) + 1;
 
   // Construct photo URL if available
-  let photoUrl = null;
-  if (student.photoUrl && student.degree && student.degree.batch) {
+  let photoUrl = student.photoUrl;
+  if (
+    photoUrl &&
+    student.degree &&
+    student.degree.batch &&
+    !photoUrl.startsWith("http")
+  ) {
     // encodeURIComponent is important for spaces in "Batch 21"
     const batchParam = encodeURIComponent(student.degree.batch.name);
     const degreeParam = encodeURIComponent(student.degree.name);
     // photoUrl in db is "photos/index.png", so we need to construct the full path
-    photoUrl = `/${batchParam}/${degreeParam}/${student.photoUrl}`;
+    photoUrl = `/${batchParam}/${degreeParam}/${photoUrl}`;
   }
 
   return {

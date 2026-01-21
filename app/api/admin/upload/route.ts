@@ -2,14 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs/promises";
 import { parseResultPDF } from "@/lib/parser";
+import { extractModuleCode, extractModuleName } from "@/lib/fs-utils";
 import { logActivity } from "@/lib/db/activity.service";
 import { findOrCreateBatch } from "@/lib/db/batch.service";
 import { findOrCreateDegree } from "@/lib/db/degree.service";
 import { findOrCreateYear } from "@/lib/db/year.service";
 import { findOrCreateSemester } from "@/lib/db/semester.service";
 import { findOrCreateModule } from "@/lib/db/module.service";
-import { findOrCreateStudent } from "@/lib/db/student.service";
-import { upsertGrade } from "@/lib/db/grade.service";
+import {
+  findStudentsByIndexNumbers,
+  bulkCreateStudents,
+} from "@/lib/db/student.service";
+import { bulkUpsertGrades } from "@/lib/db/grade.service";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_FILES = 10;
@@ -31,7 +35,7 @@ export async function POST(request: NextRequest) {
     const degree = formData.get("degree") as string;
     const year = formData.get("year") as string;
     const semester = formData.get("semester") as string;
-    const credits = parseFloat(formData.get("credits") as string) || 3;
+    const credits = parseFloat(formData.get("credits") as string) || 2.5;
     const files = formData.getAll("files") as File[];
 
     // Validation
@@ -127,17 +131,20 @@ export async function POST(request: NextRequest) {
         let savedToDatabase = false;
 
         try {
-          const students = await parseResultPDF(buffer);
+          // Parse PDF extracting metadata and records
+          const {
+            records: students,
+            moduleCode: parsedCode,
+            moduleName: parsedName,
+          } = await parseResultPDF(buffer);
 
           if (students && students.length > 0) {
             parsed = true;
             studentCount = students.length;
 
-            // Extract module info from filename
-            const moduleCode =
-              file.name.replace(".pdf", "").replace(/[^a-zA-Z0-9]/g, "_") ||
-              "Unknown";
-            const moduleName = file.name.replace(".pdf", "");
+            // Extract module info: prefer parsed content, fallback to filename
+            const moduleCode = parsedCode || extractModuleCode(file.name);
+            const moduleName = parsedName || extractModuleName(file.name);
 
             // Create module in database
             const moduleRecord = await findOrCreateModule(
@@ -147,17 +154,65 @@ export async function POST(request: NextRequest) {
               semesterRecord.id,
             );
 
-            // Save students and grades to database
-            for (const student of students) {
-              const studentRecord = await findOrCreateStudent(
-                student.indexNumber,
-                degreeRecord.id,
-              );
-              await upsertGrade(
-                studentRecord.id,
-                moduleRecord.id,
-                student.grade,
-              );
+            // OPTIMIZED: Bulk Process Students
+            const allIndexNumbers = students.map((s) => s.indexNumber);
+
+            // 1. Query existing students
+            const existingStudents = await findStudentsByIndexNumbers(
+              allIndexNumbers,
+              degreeRecord.id,
+            );
+            const existingIndexSet = new Set(
+              existingStudents.map((s) => s.indexNumber),
+            );
+
+            // 2. Identify missing students
+            const missingStudents = students
+              .filter((s) => !existingIndexSet.has(s.indexNumber))
+              // Dedup by index number locally
+              .filter(
+                (s, index, self) =>
+                  index ===
+                  self.findIndex((t) => t.indexNumber === s.indexNumber),
+              )
+              .map((s) => ({
+                indexNumber: s.indexNumber,
+                degreeId: degreeRecord.id,
+              }));
+
+            // 3. Create missing students in batch
+            if (missingStudents.length > 0) {
+              await bulkCreateStudents(missingStudents);
+            }
+
+            // 4. Fetch all students to get IDs (including newly created)
+            const allStudents = await findStudentsByIndexNumbers(
+              allIndexNumbers,
+              degreeRecord.id,
+            );
+            const studentMap = new Map<string, string>();
+            allStudents.forEach((s) => studentMap.set(s.indexNumber, s.id));
+
+            // 5. Prepare grades for batch upsert
+            const gradesToUpsert = students
+              .map((student) => {
+                const studentId = studentMap.get(student.indexNumber);
+                if (!studentId) return null;
+                return {
+                  studentId,
+                  moduleId: moduleRecord.id,
+                  grade: student.grade,
+                };
+              })
+              .filter((g) => g !== null) as {
+              studentId: string;
+              moduleId: string;
+              grade: string;
+            }[];
+
+            // 6. Bulk upsert grades
+            if (gradesToUpsert.length > 0) {
+              await bulkUpsertGrades(gradesToUpsert);
             }
 
             savedToDatabase = true;

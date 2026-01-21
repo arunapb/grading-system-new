@@ -5,7 +5,11 @@ import {
   getDegreeByNameAndBatch,
   findOrCreateDegree,
 } from "@/lib/db/degree.service";
-import { findOrCreateStudent } from "@/lib/db/student.service";
+import {
+  findOrCreateStudent,
+  findStudentsByIndexNumbers,
+  bulkCreateStudents,
+} from "@/lib/db/student.service";
 
 // Batch concurrency for optimized uploads
 const UPLOAD_BATCH_SIZE = 5;
@@ -145,22 +149,45 @@ export async function POST(request: Request) {
           message: "Saving student records to database...",
         });
 
-        await Promise.all(
-          result.students.map(async (student) => {
-            try {
-              await findOrCreateStudent(
-                student.indexNumber,
-                degreeObj.id,
-                student.name,
-              );
-            } catch (dbError) {
-              console.error(
-                `Failed to create student ${student.indexNumber}:`,
-                dbError,
-              );
-            }
-          }),
+        // OPTIMIZED: Bulk Process Students
+        const allIndexNumbers = result.students.map((s) => s.indexNumber);
+
+        // 1. Query existing students with names
+        const existingStudents = await findStudentsByIndexNumbers(
+          allIndexNumbers,
+          degreeObj.id,
         );
+        const existingMap = new Map(
+          existingStudents.map((s) => [s.indexNumber, s]),
+        );
+
+        // 2. Identify missing students
+        const missingStudents = result.students
+          .filter((s) => !existingMap.has(s.indexNumber))
+          .map((s) => ({
+            indexNumber: s.indexNumber,
+            degreeId: degreeObj.id,
+            name: s.name,
+          }));
+
+        // 3. Create missing students in batch
+        if (missingStudents.length > 0) {
+          await bulkCreateStudents(missingStudents);
+        }
+
+        // 4. Update existing students if name changed
+        const updates = result.students.filter((s) => {
+          const existing = existingMap.get(s.indexNumber);
+          return existing && existing.name !== s.name;
+        });
+
+        if (updates.length > 0) {
+          await Promise.all(
+            updates.map((s) =>
+              findOrCreateStudent(s.indexNumber, degreeObj.id, s.name),
+            ),
+          );
+        }
 
         await sendProgress({
           step: "saved",

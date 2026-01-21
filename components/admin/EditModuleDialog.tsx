@@ -26,11 +26,15 @@ export function EditModuleDialog({
   open,
   onOpenChange,
 }: EditModuleDialogProps) {
+  const [code, setCode] = useState("");
+  const [name, setName] = useState("");
   const [credits, setCredits] = useState<number | string>("");
   const updateModule = useUpdateModule();
 
   useEffect(() => {
     if (module) {
+      setCode(module.code);
+      setName(module.name);
       setCredits(module.credits);
     }
   }, [module]);
@@ -41,7 +45,11 @@ export function EditModuleDialog({
 
     await updateModule.mutateAsync({
       id: module.id,
-      data: { credits: Number(credits) },
+      data: {
+        code: code.trim().toUpperCase(),
+        name: name.trim(),
+        credits: Number(credits),
+      },
     });
     onOpenChange(false);
   };
@@ -50,13 +58,35 @@ export function EditModuleDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Module Credits</DialogTitle>
+          <DialogTitle>Edit Module Details</DialogTitle>
           <DialogDescription>
-            Update the credit value for {module?.code} - {module?.name}
+            Update the information for this module.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="code">Module Code</Label>
+              <Input
+                id="code"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="e.g. IN3410"
+                disabled={updateModule.isPending}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Module Name</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Module Name"
+                disabled={updateModule.isPending}
+                required
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="credits">Credits</Label>
               <Input

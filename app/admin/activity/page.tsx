@@ -329,6 +329,17 @@ export default function ActivityPage() {
                         <TableCell>
                           <div className="max-w-[400px] truncate group relative">
                             <span className="text-sm text-muted-foreground">
+                              {/* Custom display for Login/Logout events to show time explicitly */}
+                              {(log.action === "USER_LOGIN" ||
+                                log.action === "USER_LOGOUT") &&
+                              details.timestamp ? (
+                                <span className="font-medium text-blue-600 dark:text-blue-400 mr-2">
+                                  {new Date(
+                                    details.timestamp,
+                                  ).toLocaleTimeString()}
+                                </span>
+                              ) : null}
+
                               {typeof details === "string"
                                 ? details
                                 : Object.entries(details)
@@ -338,11 +349,17 @@ export default function ActivityPage() {
                                           "userName",
                                           "userType",
                                           "role",
-                                          "timestamp",
+                                          "timestamp", // We show timestamp separately or rely on log.createdAt
+                                          "iat",
+                                          "exp",
+                                          "jti",
                                         ].includes(key),
                                     )
                                     .map(([key, val]) => `${key}: ${val}`)
-                                    .join(", ") || "-"}
+                                    .join(", ") ||
+                                  (log.action.includes("LOGIN")
+                                    ? "Session active"
+                                    : "-")}
                             </span>
                             <div className="hidden group-hover:block absolute z-50 bg-popover text-popover-foreground p-3 rounded-lg shadow-lg border mt-1 max-w-lg whitespace-pre-wrap break-all text-xs left-0">
                               <pre>{JSON.stringify(details, null, 2)}</pre>

@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     const pdfBuffer = fs.readFileSync(fullPdfPath);
 
     // Parse PDF to extract student records
-    const records = await parseResultPDF(pdfBuffer);
+    const { records } = await parseResultPDF(pdfBuffer);
 
     // Get metadata (year and semester from path)
     const { year, semester } = extractMetadata(pdfPath);

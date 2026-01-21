@@ -59,8 +59,10 @@ export async function GET() {
         where: { batch: { name: batchName } },
       });
 
-      // Get students for this batch
-      const batchStudents = await getAllStudentsWithCGPA(batchName);
+      // Get students for this batch by filtering global list (Optimized)
+      const batchStudents = allStudents.filter(
+        (s: any) => s.batch === batchName,
+      );
 
       if (batchStudents.length === 0) {
         batchStats.push({

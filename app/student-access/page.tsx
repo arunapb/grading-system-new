@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GraduationCap, Clock, AlertTriangle } from "lucide-react";
+import { StudentAvatar } from "@/components/StudentAvatar";
+import { SGPAChart } from "@/components/student/SGPAChart";
 
 interface StudentData {
   indexNumber: string;
@@ -79,7 +81,18 @@ function StudentAccessContent() {
 
       setStudent(data.student);
       setRemainingTime(data.remainingTime);
-      setExpiresAt(new Date(data.expiresAt));
+      const expiresAtDate = new Date(data.expiresAt);
+      setExpiresAt(expiresAtDate);
+
+      // Save session to storage
+      sessionStorage.setItem(
+        "student_session",
+        JSON.stringify({
+          student: data.student,
+          expiresAt: data.expiresAt,
+          remainingTime: data.remainingTime,
+        }),
+      );
     } catch (err) {
       console.error("Error validating code:", err);
       setError("Failed to validate invitation code");
@@ -88,12 +101,36 @@ function StudentAccessContent() {
     }
   }, []);
 
-  // Auto-submit if code is in URL
+  // Check session storage or auto-submit from URL
   useEffect(() => {
+    // 1. Try session storage first
+    const savedSession = sessionStorage.getItem("student_session");
+    if (savedSession) {
+      try {
+        const session = JSON.parse(savedSession);
+        const expiresAt = new Date(session.expiresAt);
+        if (new Date() < expiresAt) {
+          setStudent(session.student);
+          setExpiresAt(expiresAt);
+          // Calculate remaining time based on current time
+          const now = new Date();
+          setRemainingTime(
+            Math.floor((expiresAt.getTime() - now.getTime()) / 1000),
+          );
+          return;
+        } else {
+          sessionStorage.removeItem("student_session");
+        }
+      } catch (e) {
+        sessionStorage.removeItem("student_session");
+      }
+    }
+
+    // 2. If no valid session, check URL
     if (codeFromUrl && !student) {
       handleSubmit(codeFromUrl);
     }
-  }, [codeFromUrl, student, handleSubmit]);
+  }, [codeFromUrl, handleSubmit]); // Removed 'student' dependency to avoid re-runs when student is set
 
   // Countdown timer
   useEffect(() => {
@@ -111,6 +148,7 @@ function StudentAccessContent() {
           "Your session has expired. Please request a new invitation link.",
         );
         setRemainingTime(null);
+        sessionStorage.removeItem("student_session");
         clearInterval(interval);
       } else {
         setRemainingTime(remaining);
@@ -148,15 +186,14 @@ function StudentAccessContent() {
           {/* Student Header */}
           <Card className="mb-6">
             <CardHeader className="text-center">
-              {student.photoUrl && (
-                <div className="flex justify-center mb-4">
-                  <img
-                    src={student.photoUrl}
-                    alt={student.name || student.indexNumber}
-                    className="w-32 h-32 rounded-full object-cover border-4 border-primary/20"
-                  />
-                </div>
-              )}
+              <div className="flex justify-center mb-4">
+                <StudentAvatar
+                  name={student.name}
+                  photoUrl={student.photoUrl}
+                  indexNumber={student.indexNumber}
+                  size="2xl"
+                />
+              </div>
               <CardTitle className="text-2xl">
                 {student.name || student.indexNumber}
               </CardTitle>
@@ -187,6 +224,9 @@ function StudentAccessContent() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Analytics Chart */}
+          <SGPAChart semesters={student.semesters} cgpa={student.cgpa} />
 
           {/* Semesters */}
           {student.semesters.map((semester, idx) => (
