@@ -24,6 +24,8 @@ export async function middleware(request: NextRequest) {
     "/api/grades",
     "/api/activity",
     "/api/student-access",
+    "/admin/reset-password",
+    "/api/admin/admins/reset-password",
   ];
   const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
 

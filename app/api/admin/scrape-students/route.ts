@@ -66,11 +66,32 @@ export async function POST(request: Request) {
         await import("@/lib/cloudinary");
       const hasCloudinary = isCloudinaryConfigured();
 
-      for (const student of result.students) {
-        // Prepare photo URL
+      // 1. Initial creation of all students in database (without photos)
+      console.log(
+        `🚀 Starting database update for ${result.students.length} students...`,
+      );
+      await Promise.all(
+        result.students.map(async (student) => {
+          try {
+            await findOrCreateStudent(
+              student.indexNumber,
+              degreeObj.id,
+              student.name,
+            );
+          } catch (dbError) {
+            console.error(
+              `Failed to create student ${student.indexNumber}:`,
+              dbError,
+            );
+          }
+        }),
+      );
+
+      // 2. Upload photos to Cloudinary and update database in parallel
+      console.log(`📸 Starting parallel image upload and DB update...`);
+      const photoUploadTasks = result.students.map(async (student) => {
         let finalPhotoUrl = student.photoUrl;
 
-        // Upload to Cloudinary if configured and photo exists
         if (
           hasCloudinary &&
           finalPhotoUrl &&
@@ -81,47 +102,41 @@ export async function POST(request: Request) {
               folder: `grading-system/students/${batchNumber}/${degree}`,
               publicId: student.indexNumber,
             });
-            finalPhotoUrl = uploadResult.url;
-          } catch (uploadError) {
-            console.error(
-              `Failed to upload photo for ${student.indexNumber}:`,
-              uploadError,
-            );
-            // Don't save original URL if upload fails (as per user request)
-            finalPhotoUrl = null;
-          }
-        }
 
-        // Try to update existing student or create new one
-        try {
-          if (degreeObj && degreeObj.id) {
-            // Logs for debugging (temporary)
-            // console.log(`Upserting student ${student.indexNumber} with Degree ID: ${degreeObj.id}`);
-
-            // Check if student exists (by index number)
-            // We use findOrCreateStudent which upserts
+            // Update student with the Cloudinary URL
             await findOrCreateStudent(
               student.indexNumber,
               degreeObj.id,
               student.name,
-              finalPhotoUrl || undefined,
+              uploadResult.url,
             );
-            updatedCount++;
+
+            return { indexNumber: student.indexNumber, success: true };
+          } catch (uploadError) {
+            console.error(
+              `Failed to upload/update photo for ${student.indexNumber}:`,
+              uploadError,
+            );
+            return { indexNumber: student.indexNumber, success: false };
           }
-        } catch (dbError) {
-          console.error(
-            `Failed to update student ${student.indexNumber}:`,
-            dbError,
-          );
         }
-      }
+        return { indexNumber: student.indexNumber, skipped: true };
+      });
+
+      // We wait for all photo tasks to settle to ensure we give a comprehensive result,
+      // but the response could also be sent earlier if we use a background job/waitUntil.
+      // Next.js standard API routes will wait for Promise.all, so this is still faster than sequential.
+      const uploadResults = await Promise.allSettled(photoUploadTasks);
+      const successfulUploads = uploadResults.filter(
+        (r) => r.status === "fulfilled" && (r.value as any).success,
+      ).length;
 
       return NextResponse.json({
         success: true,
-        message: `Successfully scraped ${result.count} students and updated ${updatedCount} records in database`,
+        message: `Successfully scraped ${result.count} students. DB initialized and ${successfulUploads} photos updated in background.`,
         count: result.count,
-        dbUpdated: updatedCount,
-        students: result.students,
+        dbUpdated: result.students.length,
+        photosUpdated: successfulUploads,
       });
     } else {
       return NextResponse.json(

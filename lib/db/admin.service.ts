@@ -1,44 +1,53 @@
 import prisma from "./prisma";
-import { Admin, Role, AccountStatus, Prisma } from "@prisma/client";
+import { AccountStatus } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 /**
- * Creates a pending admin and generates an OTP
+ * Creates a new admin with password
  */
-export async function createAdmin(username: string, name: string) {
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const hashedPassword = await hash("temp-password-" + Date.now(), 10); // temporary
+export async function createAdmin(
+  username: string,
+  name: string,
+  password: string,
+) {
+  const hashedPassword = await hash(password, 12);
 
   const admin = await prisma.admin.create({
     data: {
       username,
       name,
       password: hashedPassword,
-      status: "PENDING",
-      verificationCode: otp,
-      role: "ADMIN", // Default role
+      status: "APPROVED",
+      role: "ADMIN",
     },
   });
 
-  return { admin, otp };
+  return admin;
 }
 
 /**
- * Generates a reset OTP for an existing admin
+ * Generates a reset code for an existing admin
  */
-export async function generateResetOtp(adminId: string) {
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+export async function generateResetCode(
+  adminId: string,
+  expiresInMinutes: number = 30,
+) {
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000);
 
   const admin = await prisma.admin.update({
     where: { id: adminId },
-    data: { verificationCode: otp },
+    data: {
+      resetCode: code,
+      resetCodeExpiresAt: expiresAt,
+    },
   });
 
-  return { admin, otp };
+  return { admin, code, expiresAt };
 }
 
 /**
- * Verifies OTP and sets new password
+ * Verifies reset code and sets new password
  */
 export async function verifyAndSetPassword(
   username: string,
@@ -51,8 +60,12 @@ export async function verifyAndSetPassword(
 
   if (!admin) throw new Error("Admin not found");
 
-  if (admin.verificationCode !== code) {
-    throw new Error("Invalid verification code");
+  if (!admin.resetCode || admin.resetCode !== code.toUpperCase()) {
+    throw new Error("Invalid reset code");
+  }
+
+  if (!admin.resetCodeExpiresAt || admin.resetCodeExpiresAt < new Date()) {
+    throw new Error("Reset code has expired");
   }
 
   const hashedPassword = await hash(newPassword, 12);
@@ -61,8 +74,8 @@ export async function verifyAndSetPassword(
     where: { id: admin.id },
     data: {
       password: hashedPassword,
-      verificationCode: null, // Clear code
-      status: "APPROVED", // Ensure approved
+      resetCode: null,
+      resetCodeExpiresAt: null,
     },
   });
 }

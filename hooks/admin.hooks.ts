@@ -1,35 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Types
-export interface SystemHealth {
-  diskSpace: {
-    total: number;
-    used: number;
-    free: number;
-    percentage: number;
-  };
-  files: {
-    totalPDFs: number;
-    totalJSON: number;
-    totalSize: number;
-  };
-  parsing: {
-    totalParsed: number;
-    totalFailed: number;
-    successRate: number;
-  };
-  recentErrors: Array<{
-    timestamp: string;
-    action: string;
-    error: string;
-  }>;
-  recentActivity: Array<{
-    timestamp: string;
-    action: string;
-    details: any;
-  }>;
-}
-
 interface ScrapedBatch {
   batch: string;
   degree: string;
@@ -51,7 +22,6 @@ export interface FileInfo {
   type: string;
   modified: string;
   isDirectory: boolean;
-  // Additional fields from API
   filename?: string;
   uploadDate?: string;
   parsed?: boolean;
@@ -59,21 +29,18 @@ export interface FileInfo {
   error?: string;
 }
 
-// Hooks
-export function useSystemHealth() {
-  return useQuery({
-    queryKey: ["admin", "health"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/health");
-      if (!response.ok) throw new Error("Failed to fetch health status");
-      const data = await response.json();
-      if (!data.success)
-        throw new Error(data.error || "Failed to fetch health status");
-      return data.health as SystemHealth;
-    },
-    refetchInterval: 30000, // Refresh every 30s
-  });
+export interface AdminUser {
+  id: string;
+  name: string;
+  username: string;
+  role: "SUPER_ADMIN" | "ADMIN";
+  status: "PENDING" | "APPROVED" | "BLOCKED";
+  resetCode?: string | null;
+  resetCodeExpiresAt?: string | null;
+  createdAt: string;
 }
+
+// Hooks
 
 export function useScrapedBatches() {
   return useQuery({
@@ -166,6 +133,135 @@ export function useDeleteFile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "files"] });
+    },
+  });
+}
+
+// Admin Management Hooks
+
+export function useAdmins() {
+  return useQuery({
+    queryKey: ["admin", "users"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/admins");
+      if (!response.ok) throw new Error("Failed to fetch admins");
+      const data = await response.json();
+      return data as AdminUser[];
+    },
+  });
+}
+
+export function useCreateAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      name: string;
+      username: string;
+      password: string;
+    }) => {
+      const response = await fetch("/api/admin/admins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Failed to create admin");
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+}
+
+export function useUpdateAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      id: string;
+      name?: string;
+      username?: string;
+      password?: string;
+      status?: "PENDING" | "APPROVED" | "BLOCKED";
+    }) => {
+      const response = await fetch("/api/admin/admins", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Failed to update admin");
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+}
+
+export function useDeleteAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/admin/admins?id=${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Failed to delete admin");
+      }
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+}
+
+export function useGenerateResetCode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      adminId: string;
+      expiresInMinutes?: number;
+    }) => {
+      const response = await fetch("/api/admin/admins/reset-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Failed to generate reset code");
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+}
+
+export function useClearResetCode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (adminId: string) => {
+      const response = await fetch(
+        `/api/admin/admins/reset-code?adminId=${adminId}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Failed to clear reset code");
+      }
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
   });
 }

@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users, Shield, GraduationCap } from "lucide-react";
+import { Shield, GraduationCap } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,39 +25,9 @@ export default function LoginPage() {
   // Student login state
   const [studentCode, setStudentCode] = useState("");
 
-  // Lecturer (now Admin) login state
-  const [lectureCode, setLectureCode] = useState("");
-
-  // Admin (now Super Admin) login state
+  // Admin login state (for both ADMIN and SUPER_ADMIN)
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
-
-  const handleLecturerLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      const result = await signIn("lecturer", {
-        code: lectureCode,
-        redirect: true,
-        callbackUrl: "/",
-      });
-
-      if (result?.error) {
-        setError("Invalid admin code"); // Updated message
-        setLoading(false);
-      } else if (result?.ok) {
-        setTimeout(() => {
-          router.push("/");
-        }, 100);
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("An error occurred during login");
-      setLoading(false);
-    }
-  };
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,18 +74,14 @@ export default function LoginPage() {
           )}
 
           <Tabs defaultValue="student" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="student" className="gap-2">
                 <GraduationCap className="h-4 w-4" />
                 Student
               </TabsTrigger>
-              <TabsTrigger value="lecturer" className="gap-2">
-                <Users className="h-4 w-4" />
-                Admin
-              </TabsTrigger>
               <TabsTrigger value="admin" className="gap-2">
                 <Shield className="h-4 w-4" />
-                Super Admin
+                Admin
               </TabsTrigger>
             </TabsList>
 
@@ -149,25 +115,6 @@ export default function LoginPage() {
               </form>
             </TabsContent>
 
-            <TabsContent value="lecturer">
-              <form onSubmit={handleLecturerLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="lectureCode">Admin Code</Label>
-                  <Input
-                    id="lectureCode"
-                    type="text"
-                    placeholder="Enter admin code"
-                    value={lectureCode}
-                    onChange={(e) => setLectureCode(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign in as Admin"}
-                </Button>
-              </form>
-            </TabsContent>
-
             <TabsContent value="admin">
               <form onSubmit={handleAdminLogin} className="space-y-4">
                 <div className="space-y-2">
@@ -193,8 +140,18 @@ export default function LoginPage() {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign in as Super Admin"}
+                  {loading ? "Signing in..." : "Sign in"}
                 </Button>
+                <div className="text-center">
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-sm text-muted-foreground"
+                    onClick={() => router.push("/admin/reset-password")}
+                  >
+                    Forgot password?
+                  </Button>
+                </div>
               </form>
             </TabsContent>
           </Tabs>

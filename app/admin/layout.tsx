@@ -13,12 +13,13 @@ import {
   Download,
   FileText,
   Activity,
-  ChevronRight,
   Home,
   Book,
   Link2,
   GraduationCap,
+  Shield,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import {
   Sidebar,
   SidebarContent,
@@ -45,20 +46,23 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/batches", label: "Batches", icon: FolderTree },
   { href: "/admin/structure", label: "Structure", icon: Settings },
-  { href: "/admin/statistics", label: "Statistics", icon: BarChart3 },
   { href: "/admin/students", label: "Students", icon: Users },
   { href: "/admin/modules", label: "Modules", icon: Book },
   { href: "/admin/grades", label: "Grades", icon: GraduationCap },
   { href: "/admin/invitations", label: "Invitations", icon: Link2 },
+  { href: "/admin/admins", label: "Admins", icon: Shield },
+  { href: "/admin/statistics", label: "Statistics", icon: BarChart3 },
   { href: "/admin/scraper", label: "Scraper", icon: Download },
   { href: "/admin/upload", label: "Upload PDFs", icon: Upload },
   { href: "/admin/parser", label: "Parser", icon: FileText },
   { href: "/admin/files", label: "Files", icon: FileText },
-  { href: "/admin/health", label: "System Health", icon: Activity },
+  { href: "/admin/activity", label: "Activity Log", icon: Activity },
 ];
 
 function AppSidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const userRole = (session?.user as any)?.role;
 
   return (
     <Sidebar collapsible="icon">
@@ -87,24 +91,32 @@ function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={item.label}
-                    >
-                      <Link href={item.href}>
-                        <Icon />
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {navItems
+                .filter((item) => {
+                  const isSuperAdminOnly =
+                    item.href === "/admin/invitations" ||
+                    item.href === "/admin/admins" ||
+                    item.href === "/admin/activity";
+                  return isSuperAdminOnly ? userRole === "SUPER_ADMIN" : true;
+                })
+                .map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.label}
+                      >
+                        <Link href={item.href}>
+                          <Icon />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
