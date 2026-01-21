@@ -1,6 +1,7 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { validateStudent, validateLecturer, validateAdmin } from "@/lib/auth";
+import { logActivity } from "@/lib/db/activity.service";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -43,6 +44,20 @@ export const authOptions: NextAuthOptions = {
             indexNumber: student.indexNumber,
           } as any;
         }
+
+        // Log failed student login attempt
+        await logActivity(
+          "LOGIN_FAILED",
+          {
+            userType: "student",
+            indexNumber: credentials.indexNumber,
+            batch: credentials.batch,
+            degree: credentials.degree,
+            reason: "Invalid credentials or student not approved",
+            timestamp: new Date().toISOString(),
+          },
+          false,
+        );
 
         return null;
       },
@@ -102,6 +117,18 @@ export const authOptions: NextAuthOptions = {
           } as any;
         }
 
+        // Log failed admin login attempt
+        await logActivity(
+          "LOGIN_FAILED",
+          {
+            userType: "admin",
+            username: credentials.username,
+            reason: "Invalid credentials or admin not approved",
+            timestamp: new Date().toISOString(),
+          },
+          false,
+        );
+
         return null;
       },
     }),
@@ -133,6 +160,32 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).lectureCode = token.lectureCode;
       }
       return session;
+    },
+  },
+  events: {
+    async signIn({ user, account }) {
+      const userType = (user as any).type;
+      const role = (user as any).role;
+
+      await logActivity("USER_LOGIN", {
+        userId: user.id,
+        userName: user.name,
+        userType: userType,
+        role: role || userType, // For admins use role, for others use type
+        provider: account?.provider,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    async signOut({ token }) {
+      if (token) {
+        await logActivity("USER_LOGOUT", {
+          userId: token.sub,
+          userName: token.name,
+          userType: token.type,
+          role: (token as any).role || token.type,
+          timestamp: new Date().toISOString(),
+        });
+      }
     },
   },
   session: {
