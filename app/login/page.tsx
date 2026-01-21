@@ -21,10 +21,71 @@ export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
   // Student login state
   const [studentCode, setStudentCode] = useState("");
 
-  // ... existing handlers ...
+  // Lecturer (now Admin) login state
+  const [lectureCode, setLectureCode] = useState("");
+
+  // Admin (now Super Admin) login state
+  const [adminUsername, setAdminUsername] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+
+  const handleLecturerLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const result = await signIn("lecturer", {
+        code: lectureCode,
+        redirect: true,
+        callbackUrl: "/",
+      });
+
+      if (result?.error) {
+        setError("Invalid admin code"); // Updated message
+        setLoading(false);
+      } else if (result?.ok) {
+        setTimeout(() => {
+          router.push("/");
+        }, 100);
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("An error occurred during login");
+      setLoading(false);
+    }
+  };
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const result = await signIn("admin", {
+        username: adminUsername,
+        password: adminPassword,
+        redirect: true,
+        callbackUrl: "/admin",
+      });
+
+      if (result?.error) {
+        setError("Invalid username or password");
+        setLoading(false);
+      } else if (result?.ok) {
+        setTimeout(() => {
+          router.push("/admin");
+        }, 100);
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("An error occurred during login");
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
@@ -50,11 +111,11 @@ export default function LoginPage() {
               </TabsTrigger>
               <TabsTrigger value="lecturer" className="gap-2">
                 <Users className="h-4 w-4" />
-                Lecturer
+                Admin
               </TabsTrigger>
               <TabsTrigger value="admin" className="gap-2">
                 <Shield className="h-4 w-4" />
-                Admin
+                Super Admin
               </TabsTrigger>
             </TabsList>
 
@@ -91,18 +152,18 @@ export default function LoginPage() {
             <TabsContent value="lecturer">
               <form onSubmit={handleLecturerLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="lectureCode">Lecture Code</Label>
+                  <Label htmlFor="lectureCode">Admin Code</Label>
                   <Input
                     id="lectureCode"
                     type="text"
-                    placeholder="Enter your lecture code"
+                    placeholder="Enter admin code"
                     value={lectureCode}
                     onChange={(e) => setLectureCode(e.target.value)}
                     required
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign in as Lecturer"}
+                  {loading ? "Signing in..." : "Sign in as Admin"}
                 </Button>
               </form>
             </TabsContent>
@@ -132,7 +193,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign in as Admin"}
+                  {loading ? "Signing in..." : "Sign in as Super Admin"}
                 </Button>
               </form>
             </TabsContent>
