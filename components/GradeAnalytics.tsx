@@ -44,13 +44,31 @@ export function GradeAnalytics({ modules, semesters }: GradeAnalyticsProps) {
     {} as Record<string, number>,
   );
 
-  const gradeDistributionData = Object.entries(gradeDistribution)
-    .map(([grade, count]) => ({
-      grade,
-      count,
-      gradePoint: gradeToPoints(grade),
-    }))
-    .sort((a, b) => b.gradePoint - a.gradePoint);
+  // Fixed grade order for display
+  const ORDERED_GRADES = [
+    "A+",
+    "A",
+    "A-",
+    "B+",
+    "B",
+    "B-",
+    "C+",
+    "C",
+    "C-",
+    "D+",
+    "D",
+    "E",
+    "I",
+    "F",
+  ];
+
+  const gradeDistributionData = ORDERED_GRADES.filter(
+    (grade) => gradeDistribution[grade] > 0,
+  ).map((grade) => ({
+    grade,
+    count: gradeDistribution[grade],
+    gradePoint: gradeToPoints(grade),
+  }));
 
   // SGPA progression over semesters
   const sgpaProgressionData = semesters.map((sem) => ({
@@ -83,6 +101,8 @@ export function GradeAnalytics({ modules, semesters }: GradeAnalyticsProps) {
     "D+": "#991b1b",
     D: "#7f1d1d",
     E: "#450a0a",
+    I: "#6b7280",
+    F: "#450a0a",
   };
 
   const COLORS = [
