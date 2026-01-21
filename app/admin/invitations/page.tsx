@@ -303,12 +303,19 @@ export default function InvitationsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Max Uses</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={maxUses}
-                    onChange={(e) => setMaxUses(e.target.value)}
-                  />
+                  <Select value={maxUses} onValueChange={setMaxUses}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 use</SelectItem>
+                      <SelectItem value="2">2 uses</SelectItem>
+                      <SelectItem value="3">3 uses</SelectItem>
+                      <SelectItem value="5">5 uses</SelectItem>
+                      <SelectItem value="10">10 uses</SelectItem>
+                      <SelectItem value="1000">Unlimited (1000)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>

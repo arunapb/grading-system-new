@@ -1,5 +1,4 @@
 import prisma from "./prisma";
-import { gradeToPoints } from "../gpa-calculator";
 
 export async function findStudentsByIndexNumbers(
   indexNumbers: string[],
@@ -59,21 +58,18 @@ export async function updateStudentProfile(
 }
 
 export async function getStudentByIndex(
-  indexNumber: string,
+  idOrIndex: string,
   batchName?: string,
   degreeName?: string,
 ) {
-  const whereClause: any = { indexNumber };
-
-  if (batchName && degreeName) {
-    whereClause.degree = {
-      name: degreeName,
-      batch: { name: batchName },
-    };
-  }
-
-  return prisma.student.findFirst({
-    where: whereClause,
+  // Try to find by ID (CUID) or Index Number
+  const student = await prisma.student.findFirst({
+    where: {
+      OR: [
+        { id: idOrIndex },
+        { indexNumber: { equals: idOrIndex, mode: "insensitive" } },
+      ],
+    },
     include: {
       degree: {
         include: {
@@ -95,6 +91,8 @@ export async function getStudentByIndex(
       },
     },
   });
+
+  return student;
 }
 
 export async function getAllStudentsWithCGPA(
