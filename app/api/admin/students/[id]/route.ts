@@ -28,7 +28,11 @@ export async function GET(
           include: {
             module: {
               include: {
-                semester: true,
+                semester: {
+                  include: {
+                    year: true,
+                  },
+                },
               },
             },
           },
@@ -56,23 +60,32 @@ export async function GET(
     const academicHistory: Record<string, any> = {};
 
     student.grades.forEach((grade) => {
-      const semesterName = grade.module.semester.name;
+      const yearName = grade.module.semester.year.name; // e.g. "Year 1"
+      const semesterName = grade.module.semester.name; // e.g. "Semester 1"
+      const fullSemesterName = `${yearName} ${semesterName}`; // e.g. "Year 1 Semester 1"
+
+      const yearId = grade.module.semester.year.id;
       const semesterId = grade.module.semester.id;
+      // Composite key to ensure uniqueness: yearId + semesterId
+      const uniqueKey = `${yearId}_${semesterId}`;
+
       const credits = grade.module.credits;
       const points = grade.gradePoints ?? 0;
-      const gradeLetter = grade.grade; // A+, A, etc.
+      const gradeLetter = grade.grade;
 
-      if (!academicHistory[semesterName]) {
-        academicHistory[semesterName] = {
+      if (!academicHistory[uniqueKey]) {
+        academicHistory[uniqueKey] = {
           id: semesterId,
-          name: semesterName,
+          name: fullSemesterName, // Display name
+          yearNumber: grade.module.semester.year.number,
+          semesterNumber: grade.module.semester.number,
           modules: [],
           semTotalCredits: 0,
           semTotalPoints: 0,
         };
       }
 
-      academicHistory[semesterName].modules.push({
+      academicHistory[uniqueKey].modules.push({
         code: grade.module.code,
         name: grade.module.name,
         credits: credits,
@@ -81,8 +94,8 @@ export async function GET(
       });
 
       // Update semester totals
-      academicHistory[semesterName].semTotalCredits += credits;
-      academicHistory[semesterName].semTotalPoints += credits * points;
+      academicHistory[uniqueKey].semTotalCredits += credits;
+      academicHistory[uniqueKey].semTotalPoints += credits * points;
 
       // Update overall totals
       totalCredits += credits;
@@ -99,12 +112,12 @@ export async function GET(
       };
     });
 
-    // Sort semesters (this might need better logic if names are "Semester 1", "Semester 2")
-    // Assuming names contain numbers we can extract
+    // Sort chronologically: Year 1 Sem 1, Year 1 Sem 2, Year 2 Sem 1...
     semesters.sort((a, b) => {
-      const numA = parseInt(a.name.match(/\d+/)?.[0] || "0");
-      const numB = parseInt(b.name.match(/\d+/)?.[0] || "0");
-      return numA - numB;
+      if (a.yearNumber !== b.yearNumber) {
+        return a.yearNumber - b.yearNumber;
+      }
+      return a.semesterNumber - b.semesterNumber;
     });
 
     const cgpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
