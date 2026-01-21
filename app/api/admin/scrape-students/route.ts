@@ -41,9 +41,21 @@ export async function POST(request: Request) {
       }
 
       const degreeName = degree.toUpperCase();
-      let degreeObj: any = await getDegreeByNameAndBatch(degreeName, batch.id);
+      let degreeObj: any = await getDegreeByNameAndBatch(
+        degreeName,
+        batch.name,
+      ); // Fixed: Pass batch.name
       if (!degreeObj) {
+        console.log(`Degree ${degreeName} not found, creating...`);
         degreeObj = await findOrCreateDegree(degreeName, batch.id);
+      }
+
+      console.log(
+        `Using Degree: ${degreeObj?.name} (ID: ${degreeObj?.id}) for Batch: ${batch?.name} (ID: ${batch?.id})`,
+      );
+
+      if (!degreeObj || !degreeObj.id) {
+        throw new Error(`Invalid degree object for ${degree.toUpperCase()}`);
       }
 
       // Update database with scraped data
@@ -82,7 +94,10 @@ export async function POST(request: Request) {
 
         // Try to update existing student or create new one
         try {
-          if (degreeObj) {
+          if (degreeObj && degreeObj.id) {
+            // Logs for debugging (temporary)
+            // console.log(`Upserting student ${student.indexNumber} with Degree ID: ${degreeObj.id}`);
+
             // Check if student exists (by index number)
             // We use findOrCreateStudent which upserts
             await findOrCreateStudent(
