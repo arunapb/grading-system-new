@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
         indexNumber: student.indexNumber,
         name: student.name,
         photoUrl: student.photoUrl,
-        cgpa: Math.round(cgpa * 100) / 100,
+        cgpa: Math.round(cgpa * 10000) / 10000,
         totalCredits,
         batch: student.degree.batch.name,
         degree: student.degree.name,

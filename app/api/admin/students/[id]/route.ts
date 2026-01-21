@@ -108,7 +108,7 @@ export async function GET(
         sem.semTotalCredits > 0 ? sem.semTotalPoints / sem.semTotalCredits : 0;
       return {
         ...sem,
-        gpa: Math.round(gpa * 100) / 100,
+        gpa: Math.round(gpa * 10000) / 10000,
       };
     });
 

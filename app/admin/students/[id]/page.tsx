@@ -27,7 +27,6 @@ import {
   Mail,
   Calendar,
   BookOpen,
-  Award,
 } from "lucide-react";
 
 export default function StudentDetailsPage() {
@@ -205,7 +204,7 @@ export default function StudentDetailsPage() {
                   <CardDescription>
                     GPA:{" "}
                     <span className="font-semibold text-foreground">
-                      {semester.gpa.toFixed(2)}
+                      {semester.gpa.toFixed(4)}
                     </span>{" "}
                     • Credits: {semester.semTotalCredits}
                   </CardDescription>
