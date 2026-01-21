@@ -48,3 +48,8 @@ next-env.d.ts
 
 
 /lib/generated/prisma
+
+# Images
+data/**/*.png
+data/**/*.jpg
+data/**/*.jpeg
