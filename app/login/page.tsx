@@ -15,74 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users, Shield } from "lucide-react";
+import { Users, Shield, GraduationCap } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Student login state
+  const [studentCode, setStudentCode] = useState("");
 
-  // Lecturer login state
-  const [lectureCode, setLectureCode] = useState("");
-
-  // Admin login state
-  const [adminUsername, setAdminUsername] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
-
-  const handleLecturerLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      const result = await signIn("lecturer", {
-        code: lectureCode,
-        redirect: true,
-        callbackUrl: "/",
-      });
-
-      if (result?.error) {
-        setError("Invalid lecture code");
-        setLoading(false);
-      } else if (result?.ok) {
-        setTimeout(() => {
-          router.push("/");
-        }, 100);
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("An error occurred during login");
-      setLoading(false);
-    }
-  };
-
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      const result = await signIn("admin", {
-        username: adminUsername,
-        password: adminPassword,
-        redirect: true,
-        callbackUrl: "/admin",
-      });
-
-      if (result?.error) {
-        setError("Invalid username or password");
-        setLoading(false);
-      } else if (result?.ok) {
-        setTimeout(() => {
-          router.push("/admin");
-        }, 100);
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("An error occurred during login");
-      setLoading(false);
-    }
-  };
+  // ... existing handlers ...
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
@@ -100,8 +42,12 @@ export default function LoginPage() {
             </Alert>
           )}
 
-          <Tabs defaultValue="lecturer" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs defaultValue="student" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="student" className="gap-2">
+                <GraduationCap className="h-4 w-4" />
+                Student
+              </TabsTrigger>
               <TabsTrigger value="lecturer" className="gap-2">
                 <Users className="h-4 w-4" />
                 Lecturer
@@ -111,6 +57,36 @@ export default function LoginPage() {
                 Admin
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="student">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (studentCode.trim()) {
+                    router.push(`/student-access?code=${studentCode.trim()}`);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="studentCode">Invitation Code</Label>
+                  <Input
+                    id="studentCode"
+                    type="text"
+                    placeholder="Enter invitation code"
+                    value={studentCode}
+                    onChange={(e) =>
+                      setStudentCode(e.target.value.toUpperCase())
+                    }
+                    maxLength={6}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full">
+                  View My Grades
+                </Button>
+              </form>
+            </TabsContent>
 
             <TabsContent value="lecturer">
               <form onSubmit={handleLecturerLogin} className="space-y-4">
