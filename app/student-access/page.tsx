@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
@@ -14,8 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GraduationCap, Clock, AlertTriangle } from "lucide-react";
-import { StudentAvatar } from "@/components/StudentAvatar";
-import { SGPAChart } from "@/components/student/SGPAChart";
+import { StudentHeader } from "@/components/StudentHeader";
+import { GradeAnalytics } from "@/components/GradeAnalytics";
+import { SemesterCard } from "@/components/SemesterCard";
+import { type ModuleGrade, gradeToPoints } from "@/lib/gpa-calculator";
 
 interface StudentData {
   indexNumber: string;
@@ -31,17 +33,10 @@ interface StudentData {
     semester: string;
     sgpa: number;
     credits: number;
-    modules: Array<{
-      moduleCode: string;
-      moduleName: string;
-      grade: string;
-      credits: number;
-      gradePoints: number;
-    }>;
+    modules: ModuleGrade[];
   }>;
+  modules: ModuleGrade[];
 }
-
-import { Suspense } from "react";
 
 function StudentAccessContent() {
   const router = useRouter();
@@ -128,9 +123,10 @@ function StudentAccessContent() {
 
     // 2. If no valid session, check URL
     if (codeFromUrl && !student) {
+      setCode(codeFromUrl);
       handleSubmit(codeFromUrl);
     }
-  }, [codeFromUrl, handleSubmit]); // Removed 'student' dependency to avoid re-runs when student is set
+  }, [codeFromUrl, handleSubmit]);
 
   // Countdown timer
   useEffect(() => {
@@ -169,10 +165,17 @@ function StudentAccessContent() {
     return `${mins}m ${secs}s`;
   };
 
+  // Calculate total points for header
+  const totalPoints =
+    student?.modules.reduce((acc, module) => {
+      const points = gradeToPoints(module.grade);
+      return acc + points * module.credits;
+    }, 0) || 0;
+
   // If student data is loaded, show the profile
   if (student) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-950 dark:to-slate-900 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
         {/* Timer Banner */}
         <div className="fixed top-0 left-0 right-0 bg-amber-500 text-white py-2 px-4 flex items-center justify-center gap-2 z-50">
           <Clock className="h-4 w-4" />
@@ -182,99 +185,52 @@ function StudentAccessContent() {
           </span>
         </div>
 
-        <div className="pt-12 max-w-4xl mx-auto">
+        <div className="container mx-auto px-4 py-8 pt-16">
+          {/* Header */}
+          <div className="mb-8 text-center sm:text-left">
+            <h1 className="text-3xl font-bold tracking-tight mb-2">
+              Student Portal
+            </h1>
+            <p className="text-muted-foreground">
+              Welcome back! Here is your academic performance overview.
+            </p>
+          </div>
+
           {/* Student Header */}
-          <Card className="mb-6">
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                <StudentAvatar
-                  name={student.name}
-                  photoUrl={student.photoUrl}
-                  indexNumber={student.indexNumber}
-                  size="2xl"
-                />
-              </div>
-              <CardTitle className="text-2xl">
-                {student.name || student.indexNumber}
-              </CardTitle>
-              <CardDescription>
-                {student.indexNumber} • {student.batch} • {student.degree}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="p-4 bg-primary/5 rounded-lg">
-                  <div className="text-3xl font-bold text-primary">
-                    {student.cgpa.toFixed(2)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">CGPA</div>
-                </div>
-                <div className="p-4 bg-primary/5 rounded-lg">
-                  <div className="text-3xl font-bold text-primary">
-                    #{student.rank}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Rank</div>
-                </div>
-                <div className="p-4 bg-primary/5 rounded-lg">
-                  <div className="text-3xl font-bold text-primary">
-                    {student.totalCredits}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Credits</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mb-8">
+            <StudentHeader
+              indexNumber={student.indexNumber}
+              rank={student.rank}
+              name={student.name}
+              photoUrl={student.photoUrl}
+              cgpa={student.cgpa}
+              totalCredits={student.totalCredits}
+              moduleCount={student.modules.length}
+              totalPoints={totalPoints}
+            />
+          </div>
 
-          {/* Analytics Chart */}
-          <SGPAChart semesters={student.semesters} cgpa={student.cgpa} />
+          {/* Grade Analytics */}
+          {student.modules.length > 0 && (
+            <div className="mb-8">
+              <GradeAnalytics
+                modules={student.modules}
+                semesters={student.semesters}
+              />
+            </div>
+          )}
 
-          {/* Semesters */}
-          {student.semesters.map((semester, idx) => (
-            <Card key={idx} className="mb-4">
-              <CardHeader>
-                <CardTitle className="text-lg flex justify-between items-center">
-                  <span>
-                    {semester.year} - {semester.semester}
-                  </span>
-                  <span className="text-primary">
-                    SGPA: {semester.sgpa.toFixed(2)}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2">Code</th>
-                        <th className="text-left py-2">Module</th>
-                        <th className="text-center py-2">Credits</th>
-                        <th className="text-center py-2">Grade</th>
-                        <th className="text-center py-2">Points</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {semester.modules.map((module, midx) => (
-                        <tr key={midx} className="border-b last:border-0">
-                          <td className="py-2 font-mono">
-                            {module.moduleCode}
-                          </td>
-                          <td className="py-2">{module.moduleName}</td>
-                          <td className="py-2 text-center">{module.credits}</td>
-                          <td className="py-2 text-center font-bold">
-                            {module.grade}
-                          </td>
-                          <td className="py-2 text-center">
-                            {module.gradePoints.toFixed(2)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {/* Semester Cards */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">
+              Academic Performance by Semester
+            </h2>
+            <div className="grid gap-4">
+              {student.semesters.map((semester, idx) => (
+                <SemesterCard key={idx} semester={semester} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
