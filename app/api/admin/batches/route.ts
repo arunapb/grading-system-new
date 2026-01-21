@@ -13,37 +13,43 @@ export async function GET() {
 
     // Get top students for each batch
     const batchesWithTopStudents = await Promise.all(
-      batches.map(async (batch) => {
-        let topGPA = 0;
-        let top3Students: Array<{
-          indexNumber: string;
-          name: string | null;
-          cgpa: number;
-        }> = [];
+      batches.map(
+        async (batch: {
+          name: string;
+          degreeCount: number;
+          studentCount: number;
+        }) => {
+          let topGPA = 0;
+          let top3Students: Array<{
+            indexNumber: string;
+            name: string | null;
+            cgpa: number;
+          }> = [];
 
-        try {
-          const students = await getAllStudentsWithCGPA(batch.name);
+          try {
+            const students = await getAllStudentsWithCGPA(batch.name);
 
-          if (students.length > 0) {
-            topGPA = students[0].cgpa;
-            top3Students = students.slice(0, 3).map((s) => ({
-              indexNumber: s.indexNumber,
-              name: s.name || s.indexNumber,
-              cgpa: s.cgpa,
-            }));
+            if (students.length > 0) {
+              topGPA = students[0].cgpa;
+              top3Students = students.slice(0, 3).map((s) => ({
+                indexNumber: s.indexNumber,
+                name: s.name || s.indexNumber,
+                cgpa: s.cgpa,
+              }));
+            }
+          } catch (error) {
+            console.error(`Error getting students for ${batch.name}:`, error);
           }
-        } catch (error) {
-          console.error(`Error getting students for ${batch.name}:`, error);
-        }
 
-        return {
-          name: batch.name,
-          degrees: batch.degreeCount,
-          studentCount: batch.studentCount,
-          topGPA,
-          top3Students,
-        };
-      }),
+          return {
+            name: batch.name,
+            degrees: batch.degreeCount,
+            studentCount: batch.studentCount,
+            topGPA,
+            top3Students,
+          };
+        },
+      ),
     );
 
     console.log(`✅ Found ${batches.length} batches`);
