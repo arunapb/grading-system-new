@@ -81,9 +81,9 @@ export async function GET() {
 
     // Extract recent errors
     const recentErrors = logs
-      .filter((log) => !log.success)
+      .filter((log: any) => !log.success)
       .slice(0, 10)
-      .map((log) => ({
+      .map((log: any) => ({
         timestamp: log.createdAt.toISOString(),
         action: log.action,
         error:
@@ -94,9 +94,9 @@ export async function GET() {
 
     // Recent successful activity
     const recentActivity = logs
-      .filter((log) => log.success)
+      .filter((log: any) => log.success)
       .slice(0, 10)
-      .map((log) => ({
+      .map((log: any) => ({
         timestamp: log.createdAt.toISOString(),
         action: log.action,
         details: log.details,

@@ -37,7 +37,7 @@ export async function GET(
         year: module.semester.year.name,
         degree: module.semester.year.degree.name,
         batch: module.semester.year.degree.batch.name,
-        grades: module.grades.map((g) => ({
+        grades: module.grades.map((g: any) => ({
           id: g.id,
           grade: g.grade,
           gradePoints: g.gradePoints,

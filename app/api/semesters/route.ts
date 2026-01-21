@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       count: semesters.length,
-      semesters: semesters.map((s) => ({
+      semesters: semesters.map((s: any) => ({
         id: s.id,
         name: s.name,
         number: s.number,

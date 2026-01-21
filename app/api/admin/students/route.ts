@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate CGPA for each student
-    const studentsWithCGPA = students.map((student) => {
+    const studentsWithCGPA = students.map((student: any) => {
       let totalCredits = 0;
       let totalPoints = 0;
 

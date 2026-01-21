@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       count: modules.length,
-      modules: modules.map((m) => ({
+      modules: modules.map((m: any) => ({
         id: m.id,
         code: m.code,
         name: m.name,

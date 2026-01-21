@@ -42,11 +42,14 @@ export async function GET(req: NextRequest) {
     });
 
     // Enrich with student counts and data availability
-    const enrichedDegrees = degrees.map((degree) => {
-      const totalModules = degree.years.reduce((sum, year) => {
+    const enrichedDegrees = degrees.map((degree: any) => {
+      const totalModules = degree.years.reduce((sum: number, year: any) => {
         return (
           sum +
-          year.semesters.reduce((semSum, sem) => semSum + sem._count.modules, 0)
+          year.semesters.reduce(
+            (semSum: number, sem: any) => semSum + sem._count.modules,
+            0,
+          )
         );
       }, 0);
 

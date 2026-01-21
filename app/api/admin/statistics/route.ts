@@ -34,11 +34,12 @@ export async function GET() {
     const totalStudents = allStudents.length;
     const averageCGPA =
       totalStudents > 0
-        ? allStudents.reduce((sum, s) => sum + s.cgpa, 0) / totalStudents
+        ? allStudents.reduce((sum: number, s: any) => sum + s.cgpa, 0) /
+          totalStudents
         : 0;
 
     // Get top 10 students globally
-    const topStudentsGlobal = allStudents.slice(0, 10).map((s) => ({
+    const topStudentsGlobal = allStudents.slice(0, 10).map((s: any) => ({
       indexNumber: s.indexNumber,
       name: s.name,
       cgpa: s.cgpa,
@@ -75,12 +76,12 @@ export async function GET() {
       }
 
       const batchAvgCGPA =
-        batchStudents.reduce((sum, s) => sum + s.cgpa, 0) /
+        batchStudents.reduce((sum: number, s: any) => sum + s.cgpa, 0) /
         batchStudents.length;
       const topGPA = batchStudents[0]?.cgpa || 0;
 
       // Get top 3 students for this batch
-      const topStudents = batchStudents.slice(0, 3).map((s) => ({
+      const topStudents = batchStudents.slice(0, 3).map((s: any) => ({
         indexNumber: s.indexNumber,
         name: s.name,
         cgpa: s.cgpa,

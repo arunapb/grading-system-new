@@ -15,8 +15,8 @@ export async function GET() {
     });
 
     const scraped = degrees
-      .filter((d) => d._count.students > 0)
-      .map((d) => ({
+      .filter((d: any) => d._count.students > 0)
+      .map((d: any) => ({
         batch: d.batch.name,
         degree: d.name,
         studentCount: d._count.students,

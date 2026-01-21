@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     }
 
     const degrees = await getDegreesByBatch(batchRecord.id);
-    const degreeNames = degrees.map((d) => d.name).sort();
+    const degreeNames = degrees.map((d: any) => d.name).sort();
 
     return NextResponse.json({ degrees: degreeNames });
   } catch (error) {

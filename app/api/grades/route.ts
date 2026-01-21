@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       count: grades?.length || 0,
-      grades: grades?.map((g) => ({
+      grades: grades?.map((g: any) => ({
         id: g.id,
         grade: g.grade,
         gradePoints: g.gradePoints,
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       count: results.length,
-      grades: results.map((g) => ({
+      grades: results.map((g: any) => ({
         id: g.id,
         grade: g.grade,
         gradePoints: g.gradePoints,

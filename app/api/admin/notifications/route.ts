@@ -28,7 +28,7 @@ export async function GET() {
       take: 50,
     });
 
-    const notifications = modulesWithoutGrades.map((module) => ({
+    const notifications = modulesWithoutGrades.map((module: any) => ({
       id: module.id,
       type: "warning",
       title: "Module without grades",

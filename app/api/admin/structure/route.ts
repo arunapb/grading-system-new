@@ -58,14 +58,14 @@ export async function GET(request: Request) {
     const structure: BatchStructure = {
       batch: batch.name,
       batchId: batch.id,
-      degrees: batch.degrees.map((degree) => ({
+      degrees: batch.degrees.map((degree: any) => ({
         id: degree.id,
         name: degree.name,
-        years: degree.years.map((year) => ({
+        years: degree.years.map((year: any) => ({
           id: year.id,
           name: year.name,
           number: year.number,
-          semesters: year.semesters.map((semester) => ({
+          semesters: year.semesters.map((semester: any) => ({
             id: semester.id,
             name: semester.name,
             number: semester.number,

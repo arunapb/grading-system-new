@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
     });
 
     // Enrich with student counts and degree information
-    const enrichedBatches = batches.map((batch) => {
-      const totalStudents = batch.degrees.reduce((sum, degree) => {
+    const enrichedBatches = batches.map((batch: any) => {
+      const totalStudents = batch.degrees.reduce((sum: number, degree: any) => {
         return sum + degree._count.students;
       }, 0);
 

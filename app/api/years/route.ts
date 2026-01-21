@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       count: years.length,
-      years: years.map((y) => ({
+      years: years.map((y: any) => ({
         id: y.id,
         name: y.name,
         number: y.number,

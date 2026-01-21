@@ -59,7 +59,7 @@ export async function GET() {
       }
     }
 
-    const notifications = Array.from(moduleMap.values()).map((item) => ({
+    const notifications = Array.from(moduleMap.values()).map((item: any) => ({
       id: item.module.id,
       type: "info",
       title: "New Results Available",
