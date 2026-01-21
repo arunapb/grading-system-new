@@ -57,6 +57,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SearchableStudentSelect } from "@/components/admin/SearchableStudentSelect";
 
 interface Invitation {
   id: string;
@@ -273,22 +274,12 @@ export default function InvitationsPage() {
 
               <div className="space-y-2">
                 <Label>Student</Label>
-                <Select
-                  value={selectedStudent}
-                  onValueChange={setSelectedStudent}
+                <SearchableStudentSelect
+                  students={students}
+                  selectedStudentId={selectedStudent}
+                  onSelect={setSelectedStudent}
                   disabled={!selectedDegree}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select student" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {students.map((s: any) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.indexNumber} - {s.name || "No name"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

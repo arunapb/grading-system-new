@@ -33,6 +33,7 @@ import { GraduationCap, Plus, Trash2, Edit } from "lucide-react";
 import { useStudentsWithCGPA } from "@/hooks/student.hooks";
 import { usePublicBatches } from "@/hooks/batch.hooks";
 import { useDegrees } from "@/hooks/degree.hooks";
+import { SearchableStudentSelect } from "@/components/admin/SearchableStudentSelect";
 
 const VALID_GRADES = [
   "A+",
@@ -244,22 +245,12 @@ export default function ManualGradesPage() {
 
               <div className="space-y-2">
                 <Label>Student</Label>
-                <Select
-                  value={selectedStudent}
-                  onValueChange={setSelectedStudent}
+                <SearchableStudentSelect
+                  students={students}
+                  selectedStudentId={selectedStudent}
+                  onSelect={setSelectedStudent}
                   disabled={!selectedDegree}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select student" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {students.map((s: any) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.indexNumber} - {s.name || "No name"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

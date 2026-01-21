@@ -27,7 +27,7 @@ export async function GET() {
 
     // Get all batches
     const batches = await getAllBatches();
-    const batchNames = batches.map((b) => b.name);
+    const batchNames = batches.map((b: any) => b.name);
 
     // Get global student count and average
     const allStudents = await getAllStudentsWithCGPA();
