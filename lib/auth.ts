@@ -124,7 +124,7 @@ export async function getAvailableBatches(): Promise<string[]> {
       select: { name: true },
       orderBy: { name: "asc" },
     });
-    return batches.map((b) => b.name);
+    return batches.map((b: any) => b.name);
   } catch (error) {
     console.error("Error getting batches:", error);
     return [];
@@ -146,7 +146,7 @@ export async function getAvailableDegrees(batch: string): Promise<string[]> {
       },
     });
 
-    return batchData?.degrees.map((d) => d.name) || [];
+    return batchData?.degrees.map((d: any) => d.name) || [];
   } catch (error) {
     console.error("Error getting degrees:", error);
     return [];
