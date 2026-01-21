@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       count: logs.length,
-      logs: logs.map((log) => ({
+      logs: logs.map((log: any) => ({
         id: log.id,
         action: log.action,
         details: log.details,
