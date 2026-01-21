@@ -31,7 +31,7 @@ export async function GET() {
 
             if (students.length > 0) {
               topGPA = students[0].cgpa;
-              top3Students = students.slice(0, 3).map((s) => ({
+              top3Students = students.slice(0, 3).map((s: any) => ({
                 indexNumber: s.indexNumber,
                 name: s.name || s.indexNumber,
                 cgpa: s.cgpa,
