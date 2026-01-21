@@ -15,6 +15,13 @@ export interface UploadResult {
 /**
  * Upload an image to Cloudinary from a URL
  */
+import axios from "axios";
+
+// ... existing imports ...
+
+/**
+ * Upload an image to Cloudinary from a URL
+ */
 export async function uploadFromUrl(
   imageUrl: string,
   options?: {
@@ -23,10 +30,12 @@ export async function uploadFromUrl(
   },
 ): Promise<UploadResult> {
   try {
+    // Try direct upload first with a longer timeout
     const result = await cloudinary.uploader.upload(imageUrl, {
       folder: options?.folder || "grading-system/students",
       public_id: options?.publicId,
       overwrite: true,
+      timeout: 60000, // 60 seconds
       transformation: [
         { width: 300, height: 300, crop: "fill", gravity: "face" },
         { quality: "auto" },
@@ -38,9 +47,28 @@ export async function uploadFromUrl(
       url: result.secure_url,
       publicId: result.public_id,
     };
-  } catch (error) {
-    console.error("Failed to upload image to Cloudinary:", error);
-    throw error;
+  } catch (error: any) {
+    console.warn(
+      `Direct upload failed for ${imageUrl}, trying fallback...`,
+      error.message,
+    );
+
+    // Fallback: Download image manually and upload as buffer
+    try {
+      const response = await axios.get(imageUrl, {
+        responseType: "arraybuffer",
+        timeout: 30000, // 30s download timeout
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        },
+      });
+
+      return await uploadFromBuffer(Buffer.from(response.data), options);
+    } catch (fallbackError) {
+      console.error("Fallback upload also failed:", fallbackError);
+      throw error; // Throw original error (or fallback error)
+    }
   }
 }
 
