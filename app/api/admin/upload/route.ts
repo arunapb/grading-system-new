@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Prepare directories for file storage
+    // Prepare directories for file storage (only in development)
+    const isDev = process.env.NODE_ENV === "development";
     const inputDir = path.join(
       process.cwd(),
       "data",
@@ -90,7 +91,14 @@ export async function POST(request: NextRequest) {
       year,
       semester,
     );
-    await fs.mkdir(inputDir, { recursive: true });
+
+    if (isDev) {
+      try {
+        await fs.mkdir(inputDir, { recursive: true });
+      } catch (err) {
+        console.warn("Failed to create directory:", err);
+      }
+    }
 
     // Create database structure
     const batchRecord = await findOrCreateBatch(batch);
@@ -122,8 +130,15 @@ export async function POST(request: NextRequest) {
       try {
         // Save file
         const buffer = Buffer.from(await file.arrayBuffer());
-        const filePath = path.join(inputDir, file.name);
-        await fs.writeFile(filePath, buffer);
+
+        if (isDev) {
+          try {
+            const filePath = path.join(inputDir, file.name);
+            await fs.writeFile(filePath, buffer);
+          } catch (writeErr) {
+            console.warn("Failed to save file locally:", writeErr);
+          }
+        }
 
         // Parse PDF
         let parsed = false;
