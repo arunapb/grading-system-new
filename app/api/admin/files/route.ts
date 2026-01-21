@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       orderBy: { code: "asc" },
     });
 
-    const files = modules.map((module) => ({
+    const files = modules.map((module: any) => ({
       id: module.id,
       filename: `${module.code}.pdf`,
       moduleCode: module.code,
