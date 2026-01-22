@@ -115,6 +115,18 @@ export const authOptions: NextAuthOptions = {
             type: "admin",
             role: admin.role,
             status: admin.status,
+            // Permissions
+            canViewStructure: admin.canViewStructure,
+            canEditStructure: admin.canEditStructure,
+            canViewStudents: admin.canViewStudents,
+            canEditStudents: admin.canEditStudents,
+            canViewModules: admin.canViewModules,
+            canEditModules: admin.canEditModules,
+            canViewInvitations: admin.canViewInvitations,
+            canEditInvitations: admin.canEditInvitations,
+            canScrape: admin.canScrape,
+            canParsePDF: admin.canParsePDF,
+            canManageAdmins: admin.canManageAdmins,
           } as any;
         }
 
@@ -147,6 +159,18 @@ export const authOptions: NextAuthOptions = {
         token.degree = (user as any).degree;
         token.indexNumber = (user as any).indexNumber;
         token.lectureCode = (user as any).lectureCode;
+        // Permissions
+        token.canViewStructure = (user as any).canViewStructure;
+        token.canEditStructure = (user as any).canEditStructure;
+        token.canViewStudents = (user as any).canViewStudents;
+        token.canEditStudents = (user as any).canEditStudents;
+        token.canViewModules = (user as any).canViewModules;
+        token.canEditModules = (user as any).canEditModules;
+        token.canViewInvitations = (user as any).canViewInvitations;
+        token.canEditInvitations = (user as any).canEditInvitations;
+        token.canScrape = (user as any).canScrape;
+        token.canParsePDF = (user as any).canParsePDF;
+        token.canManageAdmins = (user as any).canManageAdmins;
       }
       return token;
     },
@@ -159,6 +183,18 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).degree = token.degree;
         (session.user as any).indexNumber = token.indexNumber;
         (session.user as any).lectureCode = token.lectureCode;
+        // Permissions
+        (session.user as any).canViewStructure = token.canViewStructure;
+        (session.user as any).canEditStructure = token.canEditStructure;
+        (session.user as any).canViewStudents = token.canViewStudents;
+        (session.user as any).canEditStudents = token.canEditStudents;
+        (session.user as any).canViewModules = token.canViewModules;
+        (session.user as any).canEditModules = token.canEditModules;
+        (session.user as any).canViewInvitations = token.canViewInvitations;
+        (session.user as any).canEditInvitations = token.canEditInvitations;
+        (session.user as any).canScrape = token.canScrape;
+        (session.user as any).canParsePDF = token.canParsePDF;
+        (session.user as any).canManageAdmins = token.canManageAdmins;
       }
       return session;
     },

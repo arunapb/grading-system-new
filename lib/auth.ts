@@ -105,6 +105,17 @@ export async function validateAdmin(username: string, password: string) {
         username: admin.username,
         role: admin.role, // SUPER_ADMIN or ADMIN
         status: admin.status,
+        canViewStructure: admin.canViewStructure,
+        canEditStructure: admin.canEditStructure,
+        canViewStudents: admin.canViewStudents,
+        canEditStudents: admin.canEditStudents,
+        canViewModules: admin.canViewModules,
+        canEditModules: admin.canEditModules,
+        canViewInvitations: admin.canViewInvitations,
+        canEditInvitations: admin.canEditInvitations,
+        canScrape: admin.canScrape,
+        canParsePDF: admin.canParsePDF,
+        canManageAdmins: admin.canManageAdmins,
       };
     }
 
