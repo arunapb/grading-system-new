@@ -89,6 +89,19 @@ model Admin {
   resetCodeExpiresAt DateTime?     // When the reset code expires
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
+
+  // Granular Permissions - View/Edit pairs
+  canViewStructure   Boolean       @default(true)  // View Batches, Degrees, Years, Semesters
+  canEditStructure   Boolean       @default(false) // Create/Edit/Delete structure items
+  canViewStudents    Boolean       @default(true)  // View student data
+  canEditStudents    Boolean       @default(false) // Create/Edit/Delete students
+  canViewModules     Boolean       @default(true)  // View modules
+  canEditModules     Boolean       @default(false) // Create/Edit/Delete modules
+  canViewInvitations Boolean       @default(false)  // View invitations
+  canEditInvitations Boolean       @default(false) // Create/Revoke invitations
+  canScrape          Boolean       @default(false) // Access Scraper
+  canParsePDF        Boolean       @default(false) // Access PDF Parser & Upload
+  canManageAdmins    Boolean       @default(false) // Create/Edit other Admins (except Super Admin)
 }
 
 model Student {
