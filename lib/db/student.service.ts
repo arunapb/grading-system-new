@@ -224,6 +224,7 @@ export async function getStudentDetails(
         sgpa,
         credits: totalCredits,
         modules: grades.map((g) => ({
+          id: g.moduleId,
           moduleCode: g.module.code,
           moduleName: g.module.name,
           grade: g.grade,
@@ -283,6 +284,7 @@ export async function getStudentDetails(
     totalCredits,
     semesters,
     modules: student.grades.map((g) => ({
+      id: g.moduleId,
       moduleCode: g.module.code,
       moduleName: g.module.name,
       grade: g.grade,

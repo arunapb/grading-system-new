@@ -3,18 +3,18 @@
  * Based on standard university grading system
  */
 export const GRADE_POINTS: Record<string, number> = {
-  "A+": 4.0,
-  A: 4.0,
+  "A+": 4,
+  A: 4,
   "A-": 3.7,
   "B+": 3.3,
-  B: 3.0,
+  B: 3,
   "B-": 2.7,
   "C+": 2.3,
-  C: 2.0,
+  C: 2,
   "C-": 1.7,
-  D: 1.0,
-  I: 0.0,
-  F: 0.0,
+  D: 1,
+  I: 0,
+  F: 0,
 };
 
 /**
@@ -34,6 +34,9 @@ export const ORDERED_GRADES = [
   "D",
   "I",
   "F",
+  "P",
+  "N",
+  "W",
 ] as const;
 
 /**
@@ -50,6 +53,7 @@ export function getGradePriority(grade: string): number {
 }
 
 export interface ModuleGrade {
+  id: string;
   moduleCode: string;
   moduleName: string;
   grade: string;
@@ -78,13 +82,17 @@ export function calculateSGPA(modules: ModuleGrade[]): number {
   let totalCredits = 0;
 
   for (const module of modules) {
+    // Skip modules with grades P, N, W (Non-GPA courses)
+    const grade = module.grade.toUpperCase().trim();
+    if (["P", "N", "W"].includes(grade)) continue;
+
     const points = gradeToPoints(module.grade);
     totalPoints += points * module.credits;
     totalCredits += module.credits;
   }
 
   return totalCredits > 0
-    ? parseFloat((totalPoints / totalCredits).toFixed(2))
+    ? Number.parseFloat((totalPoints / totalCredits).toFixed(2))
     : 0;
 }
 
@@ -137,6 +145,23 @@ export function getPredictedClass(gpa: number): string {
  * Format GPA for display (standardized to 2 decimal places)
  */
 export function formatGPA(gpa: number): string {
-  if (isNaN(gpa)) return "0.00";
+  if (Number.isNaN(gpa)) return "0.00";
   return gpa.toFixed(2);
+}
+
+/**
+ * Get badge variant based on grade
+ */
+export function getGradeBadgeVariant(
+  grade: string,
+): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" {
+  const normalizedGrade = grade.trim().toUpperCase();
+
+  if (["A+", "A", "A-", "P"].includes(normalizedGrade)) return "success";
+  if (["B+", "B", "B-"].includes(normalizedGrade)) return "default";
+  if (["C+", "C"].includes(normalizedGrade)) return "secondary";
+  if (["C-", "D", "I", "F"].includes(normalizedGrade)) return "destructive";
+
+  // N, W, and anything else
+  return "outline";
 }
