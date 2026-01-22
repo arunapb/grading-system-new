@@ -38,7 +38,7 @@ export default function StudentsPage() {
 
   const totalModules =
     students && students.length > 0
-      ? Math.max(...students.map((s) => s.moduleCount))
+      ? Math.max(...students.map((s) => s.moduleCount || 0))
       : 0;
 
   return (
