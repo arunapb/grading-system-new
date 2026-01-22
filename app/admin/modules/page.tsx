@@ -9,6 +9,7 @@ import {
   Module,
 } from "@/hooks/module.hooks";
 import { EditModuleDialog } from "@/components/admin/EditModuleDialog";
+import { AssignModulesDialog } from "@/components/admin/AssignModulesDialog";
 import {
   Table,
   TableBody,
@@ -20,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Pencil, Trash2, Plus } from "lucide-react";
+import { Loader2, Pencil, Trash2, Plus, UserPlus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,6 +76,7 @@ export default function ModulesPage() {
 
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [deletingModule, setDeletingModule] = useState<Module | null>(null);
+  const [assigningModule, setAssigningModule] = useState<Module | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newModule, setNewModule] = useState({
     code: "",
@@ -163,6 +165,15 @@ export default function ModulesPage() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          title="Assign to Students"
+                          onClick={() => setAssigningModule(module)}
+                        >
+                          <UserPlus className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Edit Module"
                           onClick={() => setEditingModule(module)}
                         >
                           <Pencil className="h-4 w-4 text-blue-600" />
@@ -170,6 +181,7 @@ export default function ModulesPage() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          title="Delete Module"
                           onClick={() => setDeletingModule(module)}
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
@@ -188,6 +200,13 @@ export default function ModulesPage() {
         module={editingModule}
         open={!!editingModule}
         onOpenChange={(open) => !open && setEditingModule(null)}
+      />
+
+      <AssignModulesDialog
+        open={!!assigningModule}
+        onOpenChange={(open) => !open && setAssigningModule(null)}
+        module={assigningModule}
+        semesterId={selection.semesterId || ""}
       />
 
       <AlertDialog
