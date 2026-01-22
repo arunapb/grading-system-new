@@ -461,7 +461,7 @@ export default function AdminsPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateAdmin}>
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto px-1">
               <div className="space-y-2">
                 <Label htmlFor="create-name">Full Name</Label>
                 <Input
@@ -785,7 +785,7 @@ export default function AdminsPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditAdmin}>
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto px-1">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Full Name</Label>
                 <Input

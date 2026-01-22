@@ -259,7 +259,7 @@ export default function ModulesPage() {
               {selection.semester}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="code" className="text-right">
                 Code

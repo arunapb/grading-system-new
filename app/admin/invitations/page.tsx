@@ -233,7 +233,7 @@ export default function InvitationsPage() {
                   Generate a time-limited access link for a student
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto px-1">
                 <div className="space-y-2">
                   <Label>Batch</Label>
                   <Select

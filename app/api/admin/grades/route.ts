@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { upsertGrade } from "@/lib/db/grade.service";
 import prisma from "@/lib/db/prisma";
+import { gradeToPoints } from "@/lib/gpa-calculator";
+import { gradeToPoints } from "@/lib/gpa-calculator";
 
 // POST - Add or update a grade for a student (admin only)
 export async function POST(request: NextRequest) {
@@ -51,12 +50,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await upsertGrade(studentId, moduleId, grade.toUpperCase());
-
-    return NextResponse.json({
-      success: true,
-      grade: result,
+    // Check existing grade
+    const existingGrade = await prisma.studentGrade.findUnique({
+      where: {
+        studentId_moduleId: {
+          studentId,
+          moduleId,
+        },
+      },
     });
+
+    if (existingGrade) {
+      const currentPoints = gradeToPoints(existingGrade.grade);
+      // If current grade is C (2.0) or higher, deny update
+      if (currentPoints >= 2.0) {
+        return NextResponse.json(
+          {
+            error:
+              "Cannot update grade. Student has already passed this module with C or better.",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
+    const result = await upsertGrade(studentId, moduleId, grade.toUpperCase());
   } catch (error) {
     console.error("Error adding/updating grade:", error);
     return NextResponse.json(
