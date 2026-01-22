@@ -78,6 +78,7 @@ export default function StudentDetailsPage() {
     Array<{ moduleCode: string; grade: string }>
   >([]);
   const [isSavingGrades, setIsSavingGrades] = useState(false);
+  const [isEnrollOpen, setIsEnrollOpen] = useState(false);
 
   // Initialize profile form when student loads
   useEffect(() => {
@@ -192,8 +193,6 @@ export default function StudentDetailsPage() {
   };
 
   const prediction = getClassPrediction(student.cgpa);
-
-  const [isEnrollOpen, setIsEnrollOpen] = useState(false);
 
   // Collect all module IDs the student already has
   const existingModuleIds =
