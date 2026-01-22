@@ -1,27 +1,36 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { getModulesBySemester } from "@/lib/db/module.service";
+import { authOptions } from "@/lib/auth-options";
+import { getModulesBySemester, getAllModules } from "@/lib/db/module.service";
 import prisma from "@/lib/db/prisma";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const semesterId = searchParams.get("semesterId");
+    const batch = searchParams.get("batch");
+    const degree = searchParams.get("degree");
 
-    if (!semesterId) {
-      return NextResponse.json(
-        { success: false, error: "Semester ID is required" },
-        { status: 400 },
-      );
+    if (semesterId) {
+      const modules = await getModulesBySemester(semesterId);
+      return NextResponse.json({ success: true, modules });
     }
 
-    const modules = await getModulesBySemester(semesterId);
+    if (batch || degree) {
+      // Import getAllModules dynamically or at top if possible, but replace_file_content target is local.
+      // I need to check imports. getModulesBySemester is imported. getAllModules is likely exported from same file.
+      // I will update imports first in next step if needed, but let's see.
+      // Assuming getAllModules is imported or I can add it.
+      // Wait, I should add the import first.
+      // Let's just do the logic update here and hope I can update imports in a separate call or same call if I target wider.
+      // I'll target the whole file or just the top import to be safe.
+      // Actually, let's just replace the GET function efficiently, and add import.
+    }
 
-    return NextResponse.json({
-      success: true,
-      modules,
-    });
+    return NextResponse.json(
+      { success: false, error: "Semester ID or Batch/Degree is required" },
+      { status: 400 },
+    );
   } catch (error) {
     console.error("Error fetching modules:", error);
     return NextResponse.json(

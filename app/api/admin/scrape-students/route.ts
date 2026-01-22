@@ -12,7 +12,7 @@ import {
 } from "@/lib/db/student.service";
 import { logActivity } from "@/lib/db/activity.service";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 
 // Batch concurrency for optimized uploads
 const UPLOAD_BATCH_SIZE = 5;

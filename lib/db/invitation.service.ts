@@ -76,7 +76,10 @@ export async function getInvitationByCode(code: string) {
 /**
  * Validate an invitation - check if it's valid and not expired/exhausted
  */
-export async function validateInvitation(code: string): Promise<{
+export async function validateInvitation(
+  code: string,
+  checkMaxUses: boolean = true,
+): Promise<{
   valid: boolean;
   error?: string;
   invitation?: Awaited<ReturnType<typeof getInvitationByCode>>;
@@ -95,8 +98,8 @@ export async function validateInvitation(code: string): Promise<{
     return { valid: false, error: "Invitation has expired" };
   }
 
-  // Check if max uses reached
-  if (invitation.useCount >= invitation.maxUses) {
+  // Check if max uses reached (only if checkMaxUses is true)
+  if (checkMaxUses && invitation.useCount >= invitation.maxUses) {
     return { valid: false, error: "Invitation has reached maximum uses" };
   }
 

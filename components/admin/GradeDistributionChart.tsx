@@ -36,7 +36,11 @@ const GRADE_COLORS: { [key: string]: string } = {
   "C-": "#d97706",
   "D+": "#ef4444",
   D: "#dc2626",
-  E: "#991b1b",
+  F: "#dc2626",
+  I: "#dc2626",
+  P: "#16a34a",
+  N: "#6b7280",
+  W: "#9ca3af",
 };
 
 const GRADE_ORDER = [
@@ -49,9 +53,12 @@ const GRADE_ORDER = [
   "C+",
   "C",
   "C-",
-  "D+",
   "D",
-  "E",
+  "I",
+  "F",
+  "P",
+  "N",
+  "W",
 ];
 
 export function GradeDistributionChart({

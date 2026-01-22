@@ -48,6 +48,7 @@ const navItems = [
   { href: "/admin/structure", label: "Structure", icon: Settings },
   { href: "/admin/students", label: "Students", icon: Users },
   { href: "/admin/modules", label: "Modules", icon: Book },
+  { href: "/admin/assignments", label: "Assignments", icon: Book },
   { href: "/admin/grades", label: "Grades", icon: GraduationCap },
   { href: "/admin/invitations", label: "Invitations", icon: Link2 },
   { href: "/admin/admins", label: "Admins", icon: Shield },
@@ -109,6 +110,8 @@ function AppSidebar() {
                     case "/admin/modules":
                     case "/admin/grades":
                       return user.canViewModules;
+                    case "/admin/assignments":
+                      return user.canAssignModules;
                     case "/admin/invitations":
                       return user.canViewInvitations;
                     case "/admin/admins":

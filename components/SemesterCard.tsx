@@ -12,11 +12,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronDown, ChevronUp, BookOpen, Award } from "lucide-react";
-import { getGPAColor, formatGPA } from "@/lib/gpa-calculator";
+import { ChevronDown, ChevronUp, BookOpen, Award, Pencil } from "lucide-react";
+import {
+  getGradeBadgeVariant,
+  getGPAColor,
+  formatGPA,
+} from "@/lib/gpa-calculator";
 import type { ModuleGrade } from "@/lib/gpa-calculator";
 
-interface SemesterData {
+export interface SemesterData {
   year: string;
   semester: string;
   sgpa: number;
@@ -26,20 +30,25 @@ interface SemesterData {
 
 interface SemesterCardProps {
   semester: SemesterData;
+  onEdit?: (module: ModuleGrade) => void;
 }
 
-export function SemesterCard({ semester }: SemesterCardProps) {
+export function SemesterCard({ semester, onEdit }: SemesterCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const getGradeBadgeVariant = (grade: string) => {
-    if (grade.startsWith("A")) return "success";
-    if (grade.startsWith("B")) return "default";
-    if (grade.startsWith("C")) return "secondary";
-    return "destructive";
+  // ... existing helper
+
+  const isEditable = (grade: string) => {
+    // Logic: PENDING or < C (C- is 1.7, C is 2.0)
+    // Including C- as it is technically less than C "2.0".
+    return ["PENDING", "D", "I", "F", "C-", "N", "W"].includes(
+      grade.toUpperCase(),
+    );
   };
 
   return (
     <Card className="border shadow-sm">
+      {/* ... Header ... */}
       <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
@@ -106,6 +115,7 @@ export function SemesterCard({ semester }: SemesterCardProps) {
                     <TableHead className="font-semibold text-right">
                       Points
                     </TableHead>
+                    {onEdit && <TableHead className="w-[50px]"></TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -135,6 +145,20 @@ export function SemesterCard({ semester }: SemesterCardProps) {
                           {module.gradePoints.toFixed(1)}
                         </span>
                       </TableCell>
+                      {onEdit && (
+                        <TableCell>
+                          {isEditable(module.grade) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary"
+                              onClick={() => onEdit(module)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

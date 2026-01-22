@@ -1,7 +1,9 @@
 import { upsertGrade } from "@/lib/db/grade.service";
 import prisma from "@/lib/db/prisma";
 import { gradeToPoints } from "@/lib/gpa-calculator";
-import { gradeToPoints } from "@/lib/gpa-calculator";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
+import { NextRequest, NextResponse } from "next/server";
 
 // POST - Add or update a grade for a student (admin only)
 export async function POST(request: NextRequest) {
@@ -33,14 +35,12 @@ export async function POST(request: NextRequest) {
       "C+",
       "C",
       "C-",
-      "D+",
       "D",
-      "D-",
-      "E",
-      "F",
       "I",
+      "F",
+      "P",
+      "N",
       "W",
-      "X",
     ];
 
     if (!validGrades.includes(grade.toUpperCase())) {
@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await upsertGrade(studentId, moduleId, grade.toUpperCase());
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error adding/updating grade:", error);
     return NextResponse.json(

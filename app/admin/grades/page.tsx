@@ -265,11 +265,18 @@ export default function ManualGradesPage() {
                       <SelectValue placeholder="Select module" />
                     </SelectTrigger>
                     <SelectContent>
-                      {modules.map((m: any) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.code} - {m.name}
-                        </SelectItem>
-                      ))}
+                      {modules
+                        .filter(
+                          (m: any) =>
+                            !studentGrades.some(
+                              (g: any) => g.moduleId === m.id,
+                            ),
+                        )
+                        .map((m: any) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.code} - {m.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>

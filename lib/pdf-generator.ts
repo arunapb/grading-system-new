@@ -213,9 +213,12 @@ export function generateStudentPDF(student: StudentDetails) {
     "C+": colors.warning,
     C: colors.warning,
     "C-": colors.warning,
-    "D+": colors.danger,
     D: colors.danger,
-    E: colors.danger,
+    F: colors.danger,
+    I: colors.danger,
+    P: colors.success,
+    N: colors.gray,
+    W: colors.gray,
   };
 
   // Draw grade distribution in a compact table format
@@ -229,9 +232,12 @@ export function generateStudentPDF(student: StudentDetails) {
     "C+",
     "C",
     "C-",
-    "D+",
     "D",
-    "E",
+    "I",
+    "F",
+    "P",
+    "N",
+    "W",
   ];
   const gradesToShow = gradeOrder.filter((g: string) => gradeDistribution[g]);
 
