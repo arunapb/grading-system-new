@@ -6,11 +6,16 @@ import { authOptions } from "@/lib/auth-options";
 import { NextRequest, NextResponse } from "next/server";
 
 // POST - Add or update a grade for a student (admin only)
-import { requireAdminAuth } from "@/lib/auth";
+import { requireAdminAuth, getAdminSession } from "@/lib/auth";
 
 // POST - Add or update a grade for a student (admin only)
 export async function POST(request: NextRequest) {
-  if (!(await requireAdminAuth())) {
+  const session = await getAdminSession();
+  if (
+    !session ||
+    ((session.user as any).role !== "SUPER_ADMIN" &&
+      !(session.user as any).canEditGrades)
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -88,7 +93,12 @@ export async function POST(request: NextRequest) {
 
 // GET - Get grades for a student or module (admin only)
 export async function GET(request: NextRequest) {
-  if (!(await requireAdminAuth())) {
+  const session = await getAdminSession();
+  if (
+    !session ||
+    ((session.user as any).role !== "SUPER_ADMIN" &&
+      !(session.user as any).canViewGrades)
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -148,7 +158,12 @@ export async function GET(request: NextRequest) {
 
 // DELETE - Delete a grade (admin only)
 export async function DELETE(request: NextRequest) {
-  if (!(await requireAdminAuth())) {
+  const session = await getAdminSession();
+  if (
+    !session ||
+    ((session.user as any).role !== "SUPER_ADMIN" &&
+      !(session.user as any).canEditGrades)
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

@@ -116,6 +116,9 @@ export async function validateAdmin(username: string, password: string) {
         canScrape: (admin as any).canScrape,
         canParsePDF: (admin as any).canParsePDF,
         canManageAdmins: (admin as any).canManageAdmins,
+        canAssignModules: (admin as any).canAssignModules,
+        canViewGrades: (admin as any).canViewGrades,
+        canEditGrades: (admin as any).canEditGrades,
       };
     }
 

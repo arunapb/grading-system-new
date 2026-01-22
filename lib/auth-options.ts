@@ -127,6 +127,8 @@ export const authOptions: NextAuthOptions = {
             canScrape: admin.canScrape,
             canParsePDF: admin.canParsePDF,
             canManageAdmins: admin.canManageAdmins,
+            canViewGrades: admin.canViewGrades,
+            canEditGrades: admin.canEditGrades,
           } as any;
         }
 
@@ -171,6 +173,8 @@ export const authOptions: NextAuthOptions = {
         token.canScrape = (user as any).canScrape;
         token.canParsePDF = (user as any).canParsePDF;
         token.canManageAdmins = (user as any).canManageAdmins;
+        token.canViewGrades = (user as any).canViewGrades;
+        token.canEditGrades = (user as any).canEditGrades;
       }
       return token;
     },
@@ -195,6 +199,8 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).canScrape = token.canScrape;
         (session.user as any).canParsePDF = token.canParsePDF;
         (session.user as any).canManageAdmins = token.canManageAdmins;
+        (session.user as any).canViewGrades = token.canViewGrades;
+        (session.user as any).canEditGrades = token.canEditGrades;
       }
       return session;
     },

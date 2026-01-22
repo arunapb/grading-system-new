@@ -36,6 +36,8 @@ export async function GET() {
         canParsePDF: true,
         canManageAdmins: true,
         canAssignModules: true,
+        canViewGrades: true,
+        canEditGrades: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -73,6 +75,8 @@ export async function POST(req: Request) {
       canParsePDF,
       canManageAdmins,
       canAssignModules,
+      canViewGrades,
+      canEditGrades,
     } = body;
 
     if (!name || !username || !password) {
@@ -114,6 +118,8 @@ export async function POST(req: Request) {
         canParsePDF: canParsePDF ?? false,
         canManageAdmins: canManageAdmins ?? false,
         canAssignModules: canAssignModules ?? false,
+        canViewGrades: canViewGrades ?? true,
+        canEditGrades: canEditGrades ?? false,
       },
       select: {
         id: true,
@@ -211,6 +217,8 @@ export async function PATCH(req: Request) {
       canParsePDF,
       canManageAdmins,
       canAssignModules,
+      canViewGrades,
+      canEditGrades,
     } = body;
 
     if (!id) {
@@ -271,8 +279,8 @@ export async function PATCH(req: Request) {
       updateData.canManageAdmins = canManageAdmins;
     if (canAssignModules !== undefined)
       updateData.canAssignModules = canAssignModules;
-    if (canAssignModules !== undefined)
-      updateData.canAssignModules = canAssignModules;
+    if (canViewGrades !== undefined) updateData.canViewGrades = canViewGrades;
+    if (canEditGrades !== undefined) updateData.canEditGrades = canEditGrades;
 
     const updatedAdmin = await prisma.admin.update({
       where: { id },

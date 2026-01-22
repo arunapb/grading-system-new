@@ -103,6 +103,8 @@ model Admin {
   canParsePDF        Boolean       @default(false) // Access PDF Parser & Upload
   canManageAdmins    Boolean       @default(false) // Create/Edit other Admins (except Super Admin)
   canAssignModules   Boolean       @default(false) // Assign modules to students without grading
+  canViewGrades      Boolean       @default(true)  // View student grades
+  canEditGrades      Boolean       @default(false) // Add/Edit/Delete grades
 }
 
 model Student {
