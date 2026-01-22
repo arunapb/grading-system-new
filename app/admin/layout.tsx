@@ -93,11 +93,37 @@ function AppSidebar() {
             <SidebarMenu>
               {navItems
                 .filter((item) => {
-                  const isSuperAdminOnly =
-                    item.href === "/admin/invitations" ||
-                    item.href === "/admin/admins" ||
-                    item.href === "/admin/activity";
-                  return isSuperAdminOnly ? userRole === "SUPER_ADMIN" : true;
+                  const user = session?.user as any;
+                  if (!user) return false;
+
+                  // Super Admin has full access
+                  if (user.role === "SUPER_ADMIN") return true;
+
+                  // Granular View permission checks for sidebar visibility
+                  switch (item.href) {
+                    case "/admin/batches":
+                    case "/admin/structure":
+                      return user.canViewStructure;
+                    case "/admin/students":
+                      return user.canViewStudents;
+                    case "/admin/modules":
+                    case "/admin/grades":
+                      return user.canViewModules;
+                    case "/admin/invitations":
+                      return user.canViewInvitations;
+                    case "/admin/admins":
+                      return user.canManageAdmins;
+                    case "/admin/scraper":
+                      return user.canScrape;
+                    case "/admin/upload":
+                    case "/admin/parser":
+                    case "/admin/files":
+                      return user.canParsePDF;
+                    case "/admin/activity":
+                      return user.canManageAdmins; // Only admins with canManageAdmins see activity log
+                    default:
+                      return true; // Dashboard, Statistics -> Viewable by all
+                  }
                 })
                 .map((item) => {
                   const Icon = item.icon;
