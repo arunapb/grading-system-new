@@ -42,7 +42,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import { useRouter } from "next/navigation";
+
 export default function ModulesPage() {
+  const router = useRouter();
   const [selection, setSelection] = useState<{
     batch: string;
     degree: string;
@@ -157,7 +160,11 @@ export default function ModulesPage() {
               </TableHeader>
               <TableBody>
                 {modules.map((module) => (
-                  <TableRow key={module.id}>
+                  <TableRow
+                    key={module.id}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => router.push(`/modules/${module.id}`)}
+                  >
                     <TableCell className="font-mono font-medium">
                       {module.code}
                     </TableCell>
@@ -175,7 +182,10 @@ export default function ModulesPage() {
                               variant="ghost"
                               size="icon"
                               title="Assign to Students"
-                              onClick={() => setAssigningModule(module)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAssigningModule(module);
+                              }}
                             >
                               <UserPlus className="h-4 w-4 text-green-600" />
                             </Button>
@@ -183,7 +193,10 @@ export default function ModulesPage() {
                               variant="ghost"
                               size="icon"
                               title="Edit Module"
-                              onClick={() => setEditingModule(module)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingModule(module);
+                              }}
                             >
                               <Pencil className="h-4 w-4 text-blue-600" />
                             </Button>
@@ -191,7 +204,10 @@ export default function ModulesPage() {
                               variant="ghost"
                               size="icon"
                               title="Delete Module"
-                              onClick={() => setDeletingModule(module)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeletingModule(module);
+                              }}
                             >
                               <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>

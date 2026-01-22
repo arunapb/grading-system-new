@@ -10,14 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+
 import {
   ArrowLeft,
   Book,
@@ -26,6 +19,7 @@ import {
   GraduationCap,
   Clock,
 } from "lucide-react";
+import { ModuleStudentsTable } from "@/components/ModuleStudentsTable";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -89,11 +83,12 @@ function calculateGradeStats(
     "C+",
     "C",
     "C-",
-    "D+",
     "D",
-    "D-",
-    "E",
+    "I",
     "F",
+    "P",
+    "N",
+    "W",
     "PENDING",
   ];
 
@@ -273,7 +268,11 @@ export default async function ModuleDetailPage({ params }: PageProps) {
                                 ? "bg-blue-500"
                                 : item.grade.startsWith("C")
                                   ? "bg-yellow-500"
-                                  : "bg-red-500"
+                                  : item.grade === "P"
+                                    ? "bg-green-500"
+                                    : ["N", "W"].includes(item.grade)
+                                      ? "bg-slate-500"
+                                      : "bg-red-500"
                         }`}
                         style={{ width: `${item.percentage}%` }}
                       />
@@ -302,49 +301,7 @@ export default async function ModuleDetailPage({ params }: PageProps) {
                 No students enrolled in this module yet.
               </p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Index Number</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Grade</TableHead>
-                    <TableHead>Grade Points</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {module.grades.map((grade) => (
-                    <TableRow key={grade.id}>
-                      <TableCell className="font-mono">
-                        {grade.student.indexNumber}
-                      </TableCell>
-                      <TableCell>{grade.student.name || "—"}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            grade.grade === "PENDING" ? "secondary" : "default"
-                          }
-                          className={
-                            grade.grade === "PENDING"
-                              ? "bg-amber-100 text-amber-800"
-                              : grade.grade.startsWith("A")
-                                ? "bg-green-100 text-green-800"
-                                : grade.grade.startsWith("B")
-                                  ? "bg-blue-100 text-blue-800"
-                                  : ""
-                          }
-                        >
-                          {grade.grade}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {grade.grade === "PENDING"
-                          ? "—"
-                          : grade.gradePoints.toFixed(2)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <ModuleStudentsTable grades={module.grades} />
             )}
           </CardContent>
         </Card>

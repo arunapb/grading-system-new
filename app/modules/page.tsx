@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -65,6 +65,7 @@ const GRADE_COLORS: Record<string, string> = {
 };
 
 export default function ModulesPage() {
+  const router = useRouter();
   const [modules, setModules] = useState<ModuleStats[]>([]);
   const [grouped, setGrouped] = useState<GroupedModules>({});
   const [loading, setLoading] = useState(true);
@@ -234,14 +235,15 @@ export default function ModulesPage() {
                                   </TableHeader>
                                   <TableBody>
                                     {semesterModules.map((module) => (
-                                      <TableRow key={module.id}>
-                                        <TableCell className="font-mono font-medium">
-                                          <Link
-                                            href={`/modules/${module.id}`}
-                                            className="text-primary hover:underline"
-                                          >
-                                            {module.code}
-                                          </Link>
+                                      <TableRow
+                                        key={module.id}
+                                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                        onClick={() =>
+                                          router.push(`/modules/${module.id}`)
+                                        }
+                                      >
+                                        <TableCell className="font-mono font-medium text-primary">
+                                          {module.code}
                                         </TableCell>
                                         <TableCell>{module.name}</TableCell>
                                         <TableCell className="text-center">
