@@ -216,6 +216,7 @@ function StudentAccessContent() {
               <GradeAnalytics
                 modules={student.modules}
                 semesters={student.semesters}
+                cgpa={student.cgpa}
               />
             </div>
           )}

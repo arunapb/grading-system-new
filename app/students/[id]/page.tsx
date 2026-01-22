@@ -126,6 +126,7 @@ export default function StudentDetailPage({
             <GradeAnalytics
               modules={student.modules}
               semesters={student.semesters}
+              cgpa={student.cgpa}
             />
           </div>
         )}

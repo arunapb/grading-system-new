@@ -20,12 +20,13 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import type { ModuleGrade } from "@/lib/gpa-calculator";
 import {
+  type ModuleGrade,
   gradeToPoints,
   ORDERED_GRADES,
   getGradePriority,
   formatGPA,
+  calculateCGPA,
 } from "@/lib/gpa-calculator";
 
 interface GradeAnalyticsProps {
@@ -36,9 +37,23 @@ interface GradeAnalyticsProps {
     sgpa: number;
     credits: number;
   }>;
+  cgpa?: number;
 }
 
-export function GradeAnalytics({ modules, semesters }: GradeAnalyticsProps) {
+export function GradeAnalytics({
+  modules,
+  semesters,
+  cgpa,
+}: GradeAnalyticsProps) {
+  // ... (existing code)
+
+  // Use provided CGPA or calculate it properly (weighted)
+  // If cgpa prop is missing, we should use the utility that does it mostly right,
+  // but ideally consumers pass the DB value.
+  // Note: calculateCGPA from lib is just calculateSGPA (weighted).
+  const displayCGPA =
+    cgpa !== undefined ? cgpa : modules.length > 0 ? calculateCGPA(modules) : 0;
+
   // Grade distribution data
   const gradeDistribution = modules.reduce(
     (acc, module) => {
@@ -234,15 +249,12 @@ export function GradeAnalytics({ modules, semesters }: GradeAnalyticsProps) {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Average Grade Point
+              Average CGPA
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">
-              {formatGPA(
-                modules.reduce((sum, m) => sum + gradeToPoints(m.grade), 0) /
-                  modules.length,
-              )}
+              {formatGPA(displayCGPA)}
             </div>
           </CardContent>
         </Card>
