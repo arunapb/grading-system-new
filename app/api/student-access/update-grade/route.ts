@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateInvitation } from "@/lib/db/invitation.service";
 import { updatePendingGrade } from "@/lib/db/grade.service";
 import { logActivity } from "@/lib/db/activity.service";
-import prisma from "@/lib/db/prisma";
 
 // POST - Student submits grade for an assigned module (ONE-TIME only)
 export async function POST(request: NextRequest) {

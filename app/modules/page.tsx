@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -235,7 +236,12 @@ export default function ModulesPage() {
                                     {semesterModules.map((module) => (
                                       <TableRow key={module.id}>
                                         <TableCell className="font-mono font-medium">
-                                          {module.code}
+                                          <Link
+                                            href={`/modules/${module.id}`}
+                                            className="text-primary hover:underline"
+                                          >
+                                            {module.code}
+                                          </Link>
                                         </TableCell>
                                         <TableCell>{module.name}</TableCell>
                                         <TableCell className="text-center">
