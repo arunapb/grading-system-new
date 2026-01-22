@@ -5,7 +5,13 @@ import {
 } from "@/lib/db/batch.service";
 import { getAllStudentsWithCGPA } from "@/lib/db/student.service";
 
+import { requireAdminAuth } from "@/lib/auth";
+
 export async function GET() {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     console.log("📦 Fetching available batches from database...");
 
@@ -71,6 +77,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     const { batchName } = await request.json();
 

@@ -21,7 +21,12 @@ interface BatchStats {
   gradeDistribution: GradeDistribution;
 }
 
+import { requireAdminAuth } from "@/lib/auth";
+
 export async function GET() {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     console.log("📊 Fetching admin statistics from database...");
 

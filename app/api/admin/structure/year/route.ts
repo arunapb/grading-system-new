@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { findOrCreateYear, getYearsByDegree } from "@/lib/db/year.service";
 import { getDegreeByNameAndBatch } from "@/lib/db/degree.service";
 
+import { requireAdminAuth } from "@/lib/auth";
+
 export async function POST(request: Request) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     const { batch, degree, yearName } = await request.json();
 

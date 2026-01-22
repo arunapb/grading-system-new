@@ -4,7 +4,12 @@ import { authOptions } from "@/lib/auth-options";
 import { getModulesBySemester, getAllModules } from "@/lib/db/module.service";
 import prisma from "@/lib/db/prisma";
 
+import { requireAdminAuth } from "@/lib/auth";
+
 export async function GET(request: Request) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     const { searchParams } = new URL(request.url);
     const semesterId = searchParams.get("semesterId");

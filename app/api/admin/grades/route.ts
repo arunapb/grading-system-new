@@ -6,14 +6,15 @@ import { authOptions } from "@/lib/auth-options";
 import { NextRequest, NextResponse } from "next/server";
 
 // POST - Add or update a grade for a student (admin only)
+import { requireAdminAuth } from "@/lib/auth";
+
+// POST - Add or update a grade for a student (admin only)
 export async function POST(request: NextRequest) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || (session.user as any)?.type !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await request.json();
     const { studentId, moduleId, grade } = body;
 
@@ -87,13 +88,11 @@ export async function POST(request: NextRequest) {
 
 // GET - Get grades for a student or module (admin only)
 export async function GET(request: NextRequest) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || (session.user as any)?.type !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get("studentId");
     const moduleId = searchParams.get("moduleId");
@@ -149,13 +148,11 @@ export async function GET(request: NextRequest) {
 
 // DELETE - Delete a grade (admin only)
 export async function DELETE(request: NextRequest) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || (session.user as any)?.type !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const gradeId = searchParams.get("id");
 

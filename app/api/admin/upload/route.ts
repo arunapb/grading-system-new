@@ -27,7 +27,12 @@ interface UploadResult {
   savedToDatabase?: boolean;
 }
 
+import { requireAdminAuth } from "@/lib/auth";
+
 export async function POST(request: NextRequest) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     const formData = await request.formData();
 

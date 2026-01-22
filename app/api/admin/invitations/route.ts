@@ -8,14 +8,15 @@ import {
 } from "@/lib/db/invitation.service";
 
 // GET - List all invitations (admin only)
+import { requireAdminAuth } from "@/lib/auth";
+
+// GET - List all invitations (admin only)
 export async function GET() {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || (session.user as any)?.type !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const invitations = await getAllInvitations();
     return NextResponse.json(invitations);
   } catch (error) {
@@ -29,13 +30,11 @@ export async function GET() {
 
 // POST - Create a new invitation (admin only)
 export async function POST(request: NextRequest) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || (session.user as any)?.type !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await request.json();
     const { studentId, expiresInMinutes = 60, maxUses = 1 } = body;
 
@@ -64,13 +63,11 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Delete an invitation (admin only)
 export async function DELETE(request: NextRequest) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || (session.user as any)?.type !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 

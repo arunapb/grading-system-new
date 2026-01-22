@@ -5,7 +5,12 @@ import {
 } from "@/lib/db/degree.service";
 import { getBatchByName, findOrCreateBatch } from "@/lib/db/batch.service";
 
+import { requireAdminAuth } from "@/lib/auth";
+
 export async function POST(request: Request) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     const { batch, degreeName } = await request.json();
 

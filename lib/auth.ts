@@ -163,3 +163,36 @@ export async function getAvailableDegrees(batch: string): Promise<string[]> {
     return [];
   }
 }
+
+/**
+ * Require admin authentication for API routes
+ * Only returns true if user is ADMIN or SUPER_ADMIN
+ */
+import { getServerSession } from "next-auth";
+import { authOptions } from "./auth-options";
+
+export async function requireAdminAuth() {
+  const session = await getServerSession(authOptions);
+
+  if (
+    !session ||
+    !session.user ||
+    !["ADMIN", "SUPER_ADMIN"].includes((session.user as any).role)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+export async function getAdminSession() {
+  const session = await getServerSession(authOptions);
+  if (
+    !session ||
+    !session.user ||
+    !["ADMIN", "SUPER_ADMIN"].includes((session.user as any).role)
+  ) {
+    return null;
+  }
+  return session;
+}

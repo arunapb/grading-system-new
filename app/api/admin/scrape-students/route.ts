@@ -58,7 +58,12 @@ async function uploadBatch(
   ).length;
 }
 
+import { requireAdminAuth } from "@/lib/auth";
+
 export async function POST(request: Request) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     const session = await getServerSession(authOptions);
     const { degree, batchNumber } = await request.json();

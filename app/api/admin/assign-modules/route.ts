@@ -8,14 +8,16 @@ import {
 import { logActivity } from "@/lib/db/activity.service";
 import prisma from "@/lib/db/prisma";
 
+import { requireAdminAuth } from "@/lib/auth";
+
 // POST - Assign modules to multiple students (bulk operation)
 export async function POST(request: NextRequest) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session || (session.user as any)?.type !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const body = await request.json();
     const { moduleIds, studentIds, assignAll, semesterId } = body;
@@ -67,7 +69,7 @@ export async function POST(request: NextRequest) {
       moduleCodes: modules.map((m) => m.code),
       studentCount: targetStudentIds.length,
       assignedCount: result.count,
-      assignedBy: (session.user as any)?.username || session.user?.email,
+      assignedBy: (session?.user as any)?.username || session?.user?.email,
       userType: "admin",
     });
 
@@ -88,13 +90,11 @@ export async function POST(request: NextRequest) {
 
 // GET - Get students for module assignment (with existing grade info)
 export async function GET(request: NextRequest) {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || (session.user as any)?.type !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const semesterId = searchParams.get("semesterId");
     const moduleIdsParam = searchParams.get("moduleIds");

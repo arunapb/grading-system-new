@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 
+import { requireAdminAuth } from "@/lib/auth";
+
 export async function GET() {
+  if (!(await requireAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     // Get all degrees with their student counts from database
     const degrees = await prisma.degree.findMany({
