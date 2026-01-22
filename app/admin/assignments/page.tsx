@@ -253,7 +253,8 @@ export default function AssignmentsPage() {
       filtered = students.filter(
         (s) =>
           s.name.toLowerCase().includes(lower) ||
-          s.indexNumber.toLowerCase().includes(lower),
+          s.indexNumber.toLowerCase().includes(lower) ||
+          selectedStudentIds.has(s.id),
       );
     }
 
@@ -278,16 +279,24 @@ export default function AssignmentsPage() {
     enrolled.sort((a, b) => a.indexNumber.localeCompare(b.indexNumber));
 
     return { eligibleStudents: eligible, enrolledStudents: enrolled };
-  }, [students, studentSearch, selectedModuleIds]);
+  }, [students, studentSearch, selectedModuleIds, selectedStudentIds]);
 
   const handleToggleAllEligible = () => {
-    if (
-      eligibleStudents.length > 0 &&
-      selectedStudentIds.size === eligibleStudents.length
-    ) {
-      setSelectedStudentIds(new Set());
+    // Check if all *visible* eligible students are selected
+    const allVisibleSelected = eligibleStudents.every((s) =>
+      selectedStudentIds.has(s.id),
+    );
+
+    if (allVisibleSelected) {
+      // Deselect all visible eligible students
+      const newSet = new Set(selectedStudentIds);
+      eligibleStudents.forEach((s) => newSet.delete(s.id));
+      setSelectedStudentIds(newSet);
     } else {
-      setSelectedStudentIds(new Set(eligibleStudents.map((s) => s.id)));
+      // Select all visible eligible students (merge with existing)
+      const newSet = new Set(selectedStudentIds);
+      eligibleStudents.forEach((s) => newSet.add(s.id));
+      setSelectedStudentIds(newSet);
     }
   };
 
@@ -519,8 +528,9 @@ export default function AssignmentsPage() {
                               <Checkbox
                                 checked={
                                   eligibleStudents.length > 0 &&
-                                  selectedStudentIds.size ===
-                                    eligibleStudents.length
+                                  eligibleStudents.every((s) =>
+                                    selectedStudentIds.has(s.id),
+                                  )
                                 }
                                 onCheckedChange={handleToggleAllEligible}
                               />

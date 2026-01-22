@@ -197,8 +197,8 @@ export default function StudentDetailsPage() {
 
   // Collect all module IDs the student already has
   const existingModuleIds =
-    student?.semesters?.flatMap((s: any) =>
-      s.modules.map((m: any) => m.code),
+    student?.semesters?.flatMap(
+      (s: any) => s.modules?.map((m: any) => m.code) || [],
     ) || [];
   // Wait, I need IDs not codes. The API response for student details might not return module IDs in the `modules` array.
   // Converting to IDs might be tricky if the frontend only has codes.
@@ -361,7 +361,7 @@ export default function StudentDetailsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {student.semesters.length}
+                {student.semesters?.length || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Found</p>
             </CardContent>
@@ -376,7 +376,7 @@ export default function StudentDetailsPage() {
           Academic History
         </h2>
 
-        {student.semesters.map((semester: any) => (
+        {student.semesters?.map((semester: any) => (
           <Card key={semester.id}>
             <CardHeader className="pb-3 border-b bg-muted/20">
               <div className="flex items-center justify-between">
