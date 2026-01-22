@@ -18,8 +18,9 @@ import {
   Link2,
   GraduationCap,
   Shield,
+  LogOut,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import {
   Sidebar,
   SidebarContent,
@@ -158,6 +159,16 @@ function AppSidebar() {
                 <Home />
                 <span>Back to Home</span>
               </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              tooltip="Logout"
+              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50"
+            >
+              <LogOut />
+              <span>Logout</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

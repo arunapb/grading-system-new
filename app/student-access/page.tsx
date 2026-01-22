@@ -275,9 +275,9 @@ function StudentAccessContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
         {/* Timer Banner */}
-        <div className="fixed top-0 left-0 right-0 bg-amber-500 text-white py-1.5 sm:py-2 px-2 sm:px-4 flex items-center justify-center gap-1 sm:gap-2 z-50 text-xs sm:text-base">
+        <div className="fixed top-0 left-0 right-0 bg-amber-500 text-white py-1.5 sm:py-2 px-2 sm:px-4 flex flex-wrap items-center justify-center gap-1 sm:gap-2 z-50 text-xs sm:text-base text-center">
           <Clock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-          <span className="font-medium whitespace-nowrap">
+          <span className="font-medium">
             Session expires in:{" "}
             {remainingTime !== null ? formatTime(remainingTime) : "..."}
           </span>
