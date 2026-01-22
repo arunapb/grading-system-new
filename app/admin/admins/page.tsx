@@ -93,6 +93,7 @@ export default function AdminsPage() {
     canScrape: false,
     canParsePDF: false,
     canManageAdmins: false,
+    canAssignModules: false,
   });
 
   const [editData, setEditData] = useState({
@@ -110,6 +111,7 @@ export default function AdminsPage() {
     canScrape: false,
     canParsePDF: false,
     canManageAdmins: false,
+    canAssignModules: false,
   });
 
   const [resetCodeData, setResetCodeData] = useState<{
@@ -139,6 +141,7 @@ export default function AdminsPage() {
         canScrape: false,
         canParsePDF: false,
         canManageAdmins: false,
+        canAssignModules: false,
       });
     } catch (error: any) {
       toast.error(error.message);
@@ -171,6 +174,7 @@ export default function AdminsPage() {
     payload.canScrape = editData.canScrape;
     payload.canParsePDF = editData.canParsePDF;
     payload.canManageAdmins = editData.canManageAdmins;
+    payload.canAssignModules = editData.canAssignModules;
 
     try {
       await updateAdmin.mutateAsync(payload);
@@ -245,6 +249,7 @@ export default function AdminsPage() {
       canScrape: admin.canScrape || false,
       canParsePDF: admin.canParsePDF || false,
       canManageAdmins: admin.canManageAdmins || false,
+      canAssignModules: admin.canAssignModules || false,
     });
     setShowEditDialog(true);
   };
@@ -745,6 +750,24 @@ export default function AdminsPage() {
                                 className="text-sm font-normal cursor-pointer"
                               >
                                 Manage Admins
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="create-assign-modules"
+                                checked={createData.canAssignModules}
+                                onCheckedChange={(checked) =>
+                                  setCreateData({
+                                    ...createData,
+                                    canAssignModules: checked === true,
+                                  })
+                                }
+                              />
+                              <Label
+                                htmlFor="create-assign-modules"
+                                className="text-sm font-normal cursor-pointer"
+                              >
+                                Assign Modules
                               </Label>
                             </div>
                           </div>

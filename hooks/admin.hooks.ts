@@ -50,6 +50,7 @@ export interface AdminUser {
   canScrape?: boolean;
   canParsePDF?: boolean;
   canManageAdmins?: boolean;
+  canAssignModules?: boolean;
 }
 
 // Hooks

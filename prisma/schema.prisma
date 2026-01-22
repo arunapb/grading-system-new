@@ -102,6 +102,7 @@ model Admin {
   canScrape          Boolean       @default(false) // Access Scraper
   canParsePDF        Boolean       @default(false) // Access PDF Parser & Upload
   canManageAdmins    Boolean       @default(false) // Create/Edit other Admins (except Super Admin)
+  canAssignModules   Boolean       @default(false) // Assign modules to students without grading
 }
 
 model Student {

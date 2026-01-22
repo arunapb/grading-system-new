@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth-options";
 import { hash } from "bcryptjs";
 import prisma from "@/lib/db/prisma";
 
@@ -35,6 +35,7 @@ export async function GET() {
         canScrape: true,
         canParsePDF: true,
         canManageAdmins: true,
+        canAssignModules: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
       canScrape,
       canParsePDF,
       canManageAdmins,
+      canAssignModules,
     } = body;
 
     if (!name || !username || !password) {
@@ -111,6 +113,7 @@ export async function POST(req: Request) {
         canScrape: canScrape ?? false,
         canParsePDF: canParsePDF ?? false,
         canManageAdmins: canManageAdmins ?? false,
+        canAssignModules: canAssignModules ?? false,
       },
       select: {
         id: true,
@@ -207,6 +210,7 @@ export async function PATCH(req: Request) {
       canScrape,
       canParsePDF,
       canManageAdmins,
+      canAssignModules,
     } = body;
 
     if (!id) {
@@ -265,6 +269,10 @@ export async function PATCH(req: Request) {
     if (canParsePDF !== undefined) updateData.canParsePDF = canParsePDF;
     if (canManageAdmins !== undefined)
       updateData.canManageAdmins = canManageAdmins;
+    if (canAssignModules !== undefined)
+      updateData.canAssignModules = canAssignModules;
+    if (canAssignModules !== undefined)
+      updateData.canAssignModules = canAssignModules;
 
     const updatedAdmin = await prisma.admin.update({
       where: { id },
