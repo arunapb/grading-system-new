@@ -63,19 +63,22 @@ export async function GET(request: NextRequest) {
 
     // Calculate CGPA for each student
     const studentsWithCGPA = students.map((student: any) => {
-      let totalCredits = 0;
-      let totalPoints = 0;
+      // Logic copied from gpa-calculator.ts / student.service.ts
+      // Filter out non-GPA grades (P, N, W)
+      const validGrades = student.grades.filter((g: any) => {
+        const gradeLetter = g.grade?.toUpperCase().trim() || "";
+        return !["P", "N", "W"].includes(gradeLetter);
+      });
 
-      for (const grade of student.grades) {
-        // Skip non-GPA grades (P=Pass, N=Not Graded, W=Withdrawn)
-        const gradeLetter = grade.grade?.toUpperCase().trim() || "";
-        if (["P", "N", "W"].includes(gradeLetter)) continue;
+      const totalCredits = validGrades.reduce(
+        (sum: number, g: any) => sum + g.module.credits,
+        0,
+      );
 
-        const credits = grade.module.credits;
-        const points = grade.gradePoints ?? 0;
-        totalCredits += credits;
-        totalPoints += credits * points;
-      }
+      const totalPoints = validGrades.reduce(
+        (sum: number, g: any) => sum + (g.gradePoints ?? 0) * g.module.credits,
+        0,
+      );
 
       const cgpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
 

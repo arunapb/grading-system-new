@@ -94,6 +94,10 @@ export async function GET(
         points: points,
       });
 
+      // Filter non-GPA grades (P=Pass, N=Not Graded, W=Withdrawn)
+      const normalizedGrade = gradeLetter?.toUpperCase().trim() || "";
+      if (["P", "N", "W"].includes(normalizedGrade)) return;
+
       // Update semester totals
       academicHistory[uniqueKey].semTotalCredits += credits;
       academicHistory[uniqueKey].semTotalPoints += credits * points;
@@ -103,12 +107,31 @@ export async function GET(
       totalPoints += credits * points;
     });
 
+    // Logic Standardized to match gpa-calculator.ts and student.service.ts
     // Calculate GPAs
     const semesters = Object.values(academicHistory).map((sem) => {
-      const gpa =
-        sem.semTotalCredits > 0 ? sem.semTotalPoints / sem.semTotalCredits : 0;
+      // Calculate SGPA for this semester
+      // Filter out non-GPA grades (P, N, W)
+      const validModules = sem.modules.filter((m: any) => {
+        const gradeLetter = m.grade?.toUpperCase().trim() || "";
+        return !["P", "N", "W"].includes(gradeLetter);
+      });
+
+      const semCredits = validModules.reduce(
+        (sum: number, m: any) => sum + m.credits,
+        0,
+      );
+      const semPoints = validModules.reduce(
+        (sum: number, m: any) => sum + (m.points ?? 0) * m.credits,
+        0,
+      );
+
+      const gpa = semCredits > 0 ? semPoints / semCredits : 0;
+
       return {
         ...sem,
+        semTotalCredits: semCredits, // Update reported credits to valid credits
+        semTotalPoints: semPoints,
         gpa: Math.round(gpa * 10000) / 10000,
       };
     });
@@ -121,7 +144,17 @@ export async function GET(
       return a.semesterNumber - b.semesterNumber;
     });
 
-    const cgpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
+    // Calculate Overall CGPA (using filtered totals)
+    let overallCredits = 0;
+    let overallPoints = 0;
+
+    // We can sum up the semester totals we just calculated
+    semesters.forEach((sem) => {
+      overallCredits += sem.semTotalCredits;
+      overallPoints += sem.semTotalPoints;
+    });
+
+    const cgpa = overallCredits > 0 ? overallPoints / overallCredits : 0;
 
     const formattedStudent = {
       id: student.id,
@@ -131,8 +164,8 @@ export async function GET(
       batch: student.degree.batch.name,
       degree: student.degree.name,
       cgpa: Math.round(cgpa * 100) / 100,
-      totalCredits,
-      totalPoints: Math.round(totalPoints * 100) / 100,
+      totalCredits: overallCredits, // This now reflects GPA credits
+      totalPoints: Math.round(overallPoints * 100) / 100,
       semesters,
     };
 
