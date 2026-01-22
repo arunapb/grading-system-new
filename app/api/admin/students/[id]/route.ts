@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { checkPermission } from "@/lib/permissions";
 import prisma from "@/lib/db/prisma";
 import { gradeToPoints } from "@/lib/gpa-calculator";
 import { logActivity } from "@/lib/db/activity.service";
@@ -10,10 +9,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || (session.user as any)?.type !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Check for canViewStudents permission
+    const permResult = await checkPermission("canViewStudents");
+    if (!permResult.authorized) {
+      return permResult.response;
     }
 
     const { id } = await params;
@@ -133,6 +132,7 @@ export async function GET(
       degree: student.degree.name,
       cgpa: Math.round(cgpa * 100) / 100,
       totalCredits,
+      totalPoints: Math.round(totalPoints * 100) / 100,
       semesters,
     };
 
@@ -154,14 +154,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    // Allow both ADMIN and SUPER_ADMIN
-    if (
-      !session ||
-      !["admin", "super-admin"].includes((session.user as any)?.type)
-    ) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Check for canEditStudents permission
+    const permResult = await checkPermission("canEditStudents");
+    if (!permResult.authorized) {
+      return permResult.response;
     }
+    const { session } = permResult;
 
     const { id } = await params;
     const body = await request.json();
