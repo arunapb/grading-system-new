@@ -94,9 +94,9 @@ export async function GET(
         points: points,
       });
 
-      // Filter non-GPA grades (P=Pass, N=Not Graded, W=Withdrawn)
+      // Filter non-GPA grades (P=Pass, N=Not Graded, W=Withdrawn, Pending)
       const normalizedGrade = gradeLetter?.toUpperCase().trim() || "";
-      if (["P", "N", "W"].includes(normalizedGrade)) return;
+      if (["P", "N", "W", "PENDING"].includes(normalizedGrade)) return;
 
       // Update semester totals
       academicHistory[uniqueKey].semTotalCredits += credits;
@@ -111,10 +111,10 @@ export async function GET(
     // Calculate GPAs
     const semesters = Object.values(academicHistory).map((sem) => {
       // Calculate SGPA for this semester
-      // Filter out non-GPA grades (P, N, W)
+      // Filter out non-GPA grades (P, N, W, Pending)
       const validModules = sem.modules.filter((m: any) => {
         const gradeLetter = m.grade?.toUpperCase().trim() || "";
-        return !["P", "N", "W"].includes(gradeLetter);
+        return !["P", "N", "W", "PENDING"].includes(gradeLetter);
       });
 
       const semCredits = validModules.reduce(

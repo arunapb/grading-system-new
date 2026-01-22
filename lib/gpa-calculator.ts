@@ -37,6 +37,7 @@ export const ORDERED_GRADES = [
   "P",
   "N",
   "W",
+  "Pending",
 ] as const;
 
 /**
@@ -82,9 +83,9 @@ export function calculateSGPA(modules: ModuleGrade[]): number {
   let totalCredits = 0;
 
   for (const module of modules) {
-    // Skip modules with grades P, N, W (Non-GPA courses)
+    // Skip modules with grades P, N, W, Pending (Non-GPA courses)
     const grade = module.grade.toUpperCase().trim();
-    if (["P", "N", "W"].includes(grade)) continue;
+    if (["P", "N", "W", "PENDING"].includes(grade)) continue;
 
     const points = gradeToPoints(module.grade);
     totalPoints += points * module.credits;
@@ -162,6 +163,6 @@ export function getGradeBadgeVariant(
   if (["C+", "C"].includes(normalizedGrade)) return "secondary";
   if (["C-", "D", "I", "F"].includes(normalizedGrade)) return "destructive";
 
-  // N, W, and anything else
+  // N, W, Pending and anything else
   return "outline";
 }

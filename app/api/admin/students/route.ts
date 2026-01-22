@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       // Filter out non-GPA grades (P, N, W)
       const validGrades = student.grades.filter((g: any) => {
         const gradeLetter = g.grade?.toUpperCase().trim() || "";
-        return !["P", "N", "W"].includes(gradeLetter);
+        return !["P", "N", "W", "PENDING"].includes(gradeLetter);
       });
 
       const totalCredits = validGrades.reduce(

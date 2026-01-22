@@ -139,10 +139,10 @@ export async function getAllStudentsWithCGPA(
   // Calculate CGPA for each student
   return students
     .map((student) => {
-      // Filter out non-GPA grades (P, N, W)
+      // Filter out non-GPA grades (P, N, W, Pending)
       const validGrades = student.grades.filter((g) => {
         const grade = g.grade?.toUpperCase().trim() || "";
-        return !["P", "N", "W"].includes(grade);
+        return !["P", "N", "W", "PENDING"].includes(grade);
       });
 
       const totalCredits = validGrades.reduce(
@@ -212,7 +212,7 @@ export async function getStudentDetails(
 
       const validGrades = grades.filter((g) => {
         const grade = g.grade?.toUpperCase().trim() || "";
-        return !["P", "N", "W"].includes(grade);
+        return !["P", "N", "W", "PENDING"].includes(grade);
       });
 
       const totalCredits = validGrades.reduce(
@@ -254,7 +254,7 @@ export async function getStudentDetails(
   // Calculate overall CGPA
   const allValidGrades = student.grades.filter((g) => {
     const grade = g.grade?.toUpperCase().trim() || "";
-    return !["P", "N", "W"].includes(grade);
+    return !["P", "N", "W", "PENDING"].includes(grade);
   });
 
   const totalCredits = allValidGrades.reduce(
