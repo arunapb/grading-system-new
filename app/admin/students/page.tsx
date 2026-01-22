@@ -38,6 +38,7 @@ import { useBatches } from "@/hooks/batch.hooks";
 import { useStudents } from "@/hooks/student.hooks";
 
 import { useRouter } from "next/navigation";
+import { formatGPA } from "@/lib/gpa-calculator";
 
 export default function StudentsPage() {
   const router = useRouter();
@@ -145,7 +146,7 @@ export default function StudentsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.avgCGPA.toFixed(4)}</div>
+            <div className="text-2xl font-bold">{formatGPA(stats.avgCGPA)}</div>
           </CardContent>
         </Card>
 
@@ -310,7 +311,7 @@ export default function StudentsPage() {
                               student.cgpa >= 3.7 ? "bg-green-600" : ""
                             }
                           >
-                            {student.cgpa.toFixed(4)}
+                            {formatGPA(student.cgpa)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right text-sm text-muted-foreground">

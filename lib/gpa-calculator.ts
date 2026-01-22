@@ -134,5 +134,14 @@ export function getPredictedClass(gpa: number): string {
   if (gpa >= 3.3) return "Second Class – Upper Division";
   if (gpa >= 3.0) return "Second Class – Lower Division";
   if (gpa >= 2.0) return "General";
+  if (gpa >= 2.0) return "General";
   return "N/A";
+}
+
+/**
+ * Format GPA for display (standardized to 2 decimal places)
+ */
+export function formatGPA(gpa: number): string {
+  if (isNaN(gpa)) return "0.00";
+  return gpa.toFixed(2);
 }

@@ -6,6 +6,7 @@ import {
   getGPAColor,
   getGPALabel,
   getPredictedClass,
+  formatGPA,
 } from "@/lib/gpa-calculator";
 import {
   GraduationCap,
@@ -87,7 +88,7 @@ export function StudentHeader({
             <p
               className={`text-4xl font-bold tabular-nums ${getGPAColor(cgpa)}`}
             >
-              {cgpa.toFixed(2)}
+              {formatGPA(cgpa)}
             </p>
           </div>
         </div>

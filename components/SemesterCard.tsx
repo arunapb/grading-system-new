@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ChevronDown, ChevronUp, BookOpen, Award } from "lucide-react";
-import { getGPAColor } from "@/lib/gpa-calculator";
+import { getGPAColor, formatGPA } from "@/lib/gpa-calculator";
 import type { ModuleGrade } from "@/lib/gpa-calculator";
 
 interface SemesterData {
@@ -67,7 +67,7 @@ export function SemesterCard({ semester }: SemesterCardProps) {
               <p
                 className={`text-2xl font-semibold tabular-nums ${getGPAColor(semester.sgpa)}`}
               >
-                {semester.sgpa.toFixed(2)}
+                {formatGPA(semester.sgpa)}
               </p>
             </div>
             <Button

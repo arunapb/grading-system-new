@@ -25,6 +25,7 @@ import {
   gradeToPoints,
   ORDERED_GRADES,
   getGradePriority,
+  formatGPA,
 } from "@/lib/gpa-calculator";
 
 interface GradeAnalyticsProps {
@@ -59,7 +60,7 @@ export function GradeAnalytics({ modules, semesters }: GradeAnalyticsProps) {
   // SGPA progression over semesters
   const sgpaProgressionData = semesters.map((sem) => ({
     name: `Y${sem.year} S${sem.semester}`,
-    sgpa: parseFloat(sem.sgpa.toFixed(2)),
+    sgpa: parseFloat(formatGPA(sem.sgpa)),
     credits: sem.credits,
   }));
 
@@ -238,10 +239,10 @@ export function GradeAnalytics({ modules, semesters }: GradeAnalyticsProps) {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">
-              {(
+              {formatGPA(
                 modules.reduce((sum, m) => sum + gradeToPoints(m.grade), 0) /
-                modules.length
-              ).toFixed(2)}
+                  modules.length,
+              )}
             </div>
           </CardContent>
         </Card>

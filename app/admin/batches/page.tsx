@@ -22,6 +22,7 @@ import { Plus, FolderTree, Users, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AddBatchDialog } from "@/components/admin/AddBatchDialog";
 import { useBatches } from "@/hooks/batch.hooks";
+import { formatGPA } from "@/lib/gpa-calculator";
 
 export default function BatchesPage() {
   const { data: batches, isLoading, refetch } = useBatches();
@@ -107,7 +108,7 @@ export default function BatchesPage() {
                           <div className="flex items-center gap-2">
                             <Trophy className="h-4 w-4 text-yellow-600" />
                             <span className="font-semibold text-blue-600">
-                              {batch.topGPA.toFixed(4)}
+                              {formatGPA(batch.topGPA)}
                             </span>
                           </div>
                         ) : (
@@ -126,7 +127,7 @@ export default function BatchesPage() {
                                   {idx + 1}. {student.name}
                                 </span>
                                 <span className="text-muted-foreground ml-2">
-                                  ({student.cgpa.toFixed(2)})
+                                  ({formatGPA(student.cgpa)})
                                 </span>
                               </div>
                             ))}

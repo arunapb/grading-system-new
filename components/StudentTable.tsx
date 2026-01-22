@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpDown, Eye, Download, Loader2 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { getGPAColor, getGPALabel } from "@/lib/gpa-calculator";
+import { getGPAColor, getGPALabel, formatGPA } from "@/lib/gpa-calculator";
 import { StudentAvatar } from "@/components/StudentAvatar";
 import { useStudents } from "@/hooks/student.hooks";
 
@@ -260,7 +260,7 @@ export function StudentTable({ batch, degree }: StudentTableProps) {
                     <span
                       className={`text-lg font-bold ${getGPAColor(student.cgpa)}`}
                     >
-                      {student.cgpa.toFixed(4)}
+                      {formatGPA(student.cgpa)}
                     </span>
                   </TableCell>
                   <TableCell>

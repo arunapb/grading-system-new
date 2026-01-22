@@ -27,14 +27,128 @@ import {
   Mail,
   Calendar,
   BookOpen,
+  Pencil,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { ORDERED_GRADES, formatGPA } from "@/lib/gpa-calculator";
 
 export default function StudentDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
 
-  const { data: student, isLoading, error } = useAdminStudent(id);
+  const { data: student, isLoading, error, refetch } = useAdminStudent(id);
+
+  // Profile Edit State
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({ name: "", indexNumber: "" });
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Grade Edit State
+  const [isGradesOpen, setIsGradesOpen] = useState(false);
+  const [selectedSemesterId, setSelectedSemesterId] = useState<string | null>(
+    null,
+  );
+  const [gradesForm, setGradesForm] = useState<
+    Array<{ moduleCode: string; grade: string }>
+  >([]);
+  const [isSavingGrades, setIsSavingGrades] = useState(false);
+
+  // Initialize profile form when student loads
+  useEffect(() => {
+    if (student) {
+      setProfileForm({
+        name: student.name || "",
+        indexNumber: student.indexNumber || "",
+      });
+    }
+  }, [student]);
+
+  const handleSaveProfile = async () => {
+    try {
+      setIsSavingProfile(true);
+      const response = await fetch(`/api/admin/students/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "PROFILE",
+          data: profileForm,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update profile");
+
+      toast.success("Profile updated successfully");
+      setIsProfileOpen(false);
+      refetch(); // Refresh data
+    } catch (error) {
+      toast.error("Failed to update profile");
+      console.error(error);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleEditGrades = (semester: any) => {
+    setSelectedSemesterId(semester.id);
+    setGradesForm(
+      semester.modules.map((m: any) => ({
+        moduleCode: m.code,
+        grade: m.grade,
+      })),
+    );
+    setIsGradesOpen(true);
+  };
+
+  const handleSaveGrades = async () => {
+    if (!selectedSemesterId) return;
+
+    try {
+      setIsSavingGrades(true);
+      const response = await fetch(`/api/admin/students/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "GRADES",
+          data: {
+            grades: gradesForm.map((g) => ({
+              ...g,
+              semesterId: selectedSemesterId,
+            })),
+          },
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update grades");
+
+      toast.success("Grades updated successfully");
+      setIsGradesOpen(false);
+      refetch(); // Refresh data
+    } catch (error) {
+      toast.error("Failed to update grades");
+      console.error(error);
+    } finally {
+      setIsSavingGrades(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -79,8 +193,20 @@ export default function StudentDetailsPage() {
         <Button variant="outline" size="icon" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{student.name}</h1>
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight">
+              {student.name}
+            </h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setIsProfileOpen(true)}
+            >
+              <Pencil className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </div>
           <p className="text-muted-foreground flex items-center gap-2">
             <span className="font-mono">{student.indexNumber}</span>
           </p>
@@ -152,7 +278,7 @@ export default function StudentDetailsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold flex items-center gap-2">
-                {student.cgpa.toFixed(4)}
+                {formatGPA(student.cgpa)}
                 <Badge className={prediction.color}>{prediction.class}</Badge>
               </div>
             </CardContent>
@@ -200,11 +326,21 @@ export default function StudentDetailsPage() {
             <CardHeader className="pb-3 border-b bg-muted/20">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <CardTitle>{semester.name}</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    {semester.name}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => handleEditGrades(semester)}
+                    >
+                      <Pencil className="h-3 w-3 text-muted-foreground" />
+                    </Button>
+                  </CardTitle>
                   <CardDescription>
                     GPA:{" "}
                     <span className="font-semibold text-foreground">
-                      {semester.gpa.toFixed(4)}
+                      {formatGPA(semester.gpa)}
                     </span>{" "}
                     • Credits: {semester.semTotalCredits}
                   </CardDescription>
@@ -256,6 +392,140 @@ export default function StudentDetailsPage() {
           </Card>
         ))}
       </div>
+
+      {/* Profile Edit Dialog */}
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Student Profile</DialogTitle>
+            <DialogDescription>
+              Update student&apos;s basic information.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                value={profileForm.name}
+                onChange={(e) =>
+                  setProfileForm({ ...profileForm, name: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="index" className="text-right">
+                Index No
+              </Label>
+              <Input
+                id="index"
+                value={profileForm.indexNumber}
+                onChange={(e) =>
+                  setProfileForm({
+                    ...profileForm,
+                    indexNumber: e.target.value,
+                  })
+                }
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsProfileOpen(false)}
+              disabled={isSavingProfile}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
+              {isSavingProfile ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Grades Edit Dialog */}
+      <Dialog open={isGradesOpen} onOpenChange={setIsGradesOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Grades</DialogTitle>
+            <DialogDescription>
+              Update grades for this semester. This will recalculate GPA.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="bg-muted/30 p-4 rounded-md">
+              <div className="grid grid-cols-12 font-medium text-sm text-muted-foreground mb-2 px-2">
+                <div className="col-span-3">Code</div>
+                <div className="col-span-3">Grade</div>
+              </div>
+              <div className="space-y-2">
+                {gradesForm.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="grid grid-cols-12 items-center gap-4"
+                  >
+                    <div className="col-span-3 font-mono text-sm">
+                      {item.moduleCode}
+                    </div>
+                    <div className="col-span-3">
+                      <Select
+                        value={item.grade}
+                        onValueChange={(value) => {
+                          const newGrades = [...gradesForm];
+                          newGrades[idx].grade = value;
+                          setGradesForm(newGrades);
+                        }}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="Grade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ORDERED_GRADES.map((grade) => (
+                            <SelectItem key={grade} value={grade}>
+                              {grade}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsGradesOpen(false)}
+              disabled={isSavingGrades}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveGrades} disabled={isSavingGrades}>
+              {isSavingGrades ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

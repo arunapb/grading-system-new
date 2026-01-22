@@ -14,6 +14,7 @@ import { Users, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useStudents } from "@/hooks/student.hooks";
+import { formatGPA } from "@/lib/gpa-calculator";
 
 export default function StudentsPage() {
   const { data: students, isLoading, error } = useStudents();
@@ -88,7 +89,7 @@ export default function StudentsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-blue-600">
-                  {avgCGPA.toFixed(2)}
+                  {formatGPA(avgCGPA)}
                 </div>
               </CardContent>
             </Card>
@@ -100,7 +101,7 @@ export default function StudentsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-green-600">
-                  {students.length > 0 ? students[0].cgpa.toFixed(2) : "-"}
+                  {students.length > 0 ? formatGPA(students[0].cgpa) : "-"}
                 </div>
               </CardContent>
             </Card>

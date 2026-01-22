@@ -11,6 +11,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatGPA } from "@/lib/gpa-calculator";
 
 interface SemesterData {
   year: string;
@@ -61,7 +62,7 @@ export function SGPAChart({ semesters, cgpa }: SGPAChartProps) {
                           {payload[0].payload.fullLabel}
                         </p>
                         <p className="text-primary font-bold">
-                          SGPA: {Number(payload[0].value).toFixed(2)}
+                          SGPA: {formatGPA(Number(payload[0].value))}
                         </p>
                       </div>
                     );
@@ -72,7 +73,7 @@ export function SGPAChart({ semesters, cgpa }: SGPAChartProps) {
               <ReferenceLine
                 y={cgpa}
                 label={{
-                  value: `CGPA: ${cgpa.toFixed(2)}`,
+                  value: `CGPA: ${formatGPA(cgpa)}`,
                   position: "right",
                   fill: "#8884d8",
                   fontSize: 12,

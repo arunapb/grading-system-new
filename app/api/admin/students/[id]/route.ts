@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/db/prisma";
+import { gradeToPoints } from "@/lib/gpa-calculator";
+import { logActivity } from "@/lib/db/activity.service";
 
 export async function GET(
   request: NextRequest,
@@ -142,6 +144,125 @@ export async function GET(
     console.error("Error fetching student details:", error);
     return NextResponse.json(
       { error: "Failed to fetch student details" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    // Allow both ADMIN and SUPER_ADMIN
+    if (
+      !session ||
+      !["admin", "super-admin"].includes((session.user as any)?.type)
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+    const { type, data } = body;
+
+    const student = await prisma.student.findUnique({
+      where: { id },
+      include: {
+        grades: true,
+      },
+    });
+
+    if (!student) {
+      return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    }
+
+    if (type === "PROFILE") {
+      const { name, indexNumber } = data;
+
+      await prisma.student.update({
+        where: { id },
+        data: {
+          name,
+          indexNumber,
+        },
+      });
+
+      await logActivity(
+        "STUDENT_UPDATE",
+        {
+          studentId: id,
+          previous: { name: student.name, indexNumber: student.indexNumber },
+          updated: { name, indexNumber },
+          updatedBy: (session.user as any).username,
+        },
+        true,
+      );
+
+      return NextResponse.json({ success: true });
+    }
+
+    if (type === "GRADES") {
+      const { grades } = data as {
+        grades: Array<{
+          moduleCode: string;
+          grade: string;
+          semesterId: string;
+        }>;
+      };
+
+      for (const gradeItem of grades) {
+        const module = await prisma.module.findFirst({
+          where: {
+            code: gradeItem.moduleCode,
+            semesterId: gradeItem.semesterId,
+          },
+        });
+
+        if (module) {
+          const gradePoints = gradeToPoints(gradeItem.grade);
+
+          await prisma.studentGrade.upsert({
+            where: {
+              studentId_moduleId: {
+                studentId: id,
+                moduleId: module.id,
+              },
+            },
+            update: {
+              grade: gradeItem.grade,
+              gradePoints,
+            },
+            create: {
+              studentId: id,
+              moduleId: module.id,
+              grade: gradeItem.grade,
+              gradePoints,
+            },
+          });
+        }
+      }
+
+      await logActivity(
+        "STUDENT_GRADES_UPDATE",
+        {
+          studentId: id,
+          updatedCount: grades.length,
+          updatedBy: (session.user as any).username,
+        },
+        true,
+      );
+
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: "Invalid update type" }, { status: 400 });
+  } catch (error) {
+    console.error("Error updating student:", error);
+    await logActivity("STUDENT_UPDATE_FAILED", { error: String(error) }, false);
+    return NextResponse.json(
+      { error: "Failed to update student" },
       { status: 500 },
     );
   }

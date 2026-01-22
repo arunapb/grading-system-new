@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAdminStats } from "@/hooks/stats.hooks";
+import { formatGPA } from "@/lib/gpa-calculator";
 
 export default function StatisticsPage() {
   const { data, isLoading } = useAdminStats();
@@ -112,7 +113,7 @@ export default function StatisticsPage() {
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-purple-600" />
               <span className="text-3xl font-bold">
-                {data.overall.averageCGPA.toFixed(4)}
+                {formatGPA(data.overall.averageCGPA)}
               </span>
             </div>
           </CardContent>
@@ -229,13 +230,13 @@ export default function StatisticsPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Average CGPA</span>
                   <span className="font-semibold text-lg">
-                    {selectedBatchData.averageCGPA.toFixed(4)}
+                    {formatGPA(selectedBatchData.averageCGPA)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Top CGPA</span>
                   <span className="font-semibold text-lg text-green-600">
-                    {selectedBatchData.topGPA.toFixed(4)}
+                    {formatGPA(selectedBatchData.topGPA)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">

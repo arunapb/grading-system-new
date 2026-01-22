@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { formatGPA } from "./gpa-calculator";
 
 interface ModuleGrade {
   moduleCode: string;
@@ -168,7 +169,7 @@ export function generateStudentPDF(student: StudentDetails) {
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(cgpaColor[0], cgpaColor[1], cgpaColor[2]);
-  doc.text(student.cgpa.toFixed(4), 145, cardStartY + 22, { align: "center" });
+  doc.text(formatGPA(student.cgpa), 145, cardStartY + 22, { align: "center" });
 
   // Rank - top right
   doc.setFontSize(8);
@@ -274,7 +275,7 @@ export function generateStudentPDF(student: StudentDetails) {
   const semesterTableData = student.semesters.map((sem: SemesterData) => [
     sem.year,
     `Semester ${sem.semester}`,
-    sem.sgpa.toFixed(4),
+    formatGPA(sem.sgpa),
     sem.credits.toString(),
     sem.modules.length.toString(),
   ]);
@@ -361,7 +362,7 @@ export function generateStudentPDF(student: StudentDetails) {
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.gray[0], colors.gray[1], colors.gray[2]);
-    doc.text(`SGPA: ${semGPA.toFixed(4)}`, 170, yPos + 2);
+    doc.text(`SGPA: ${formatGPA(semGPA)}`, 170, yPos + 2);
 
     yPos += 8;
 

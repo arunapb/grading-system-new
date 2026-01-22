@@ -38,6 +38,7 @@ import {
   ChartLegendContent,
 } from "@/components/ui/chart";
 import { useAdminStats } from "@/hooks/stats.hooks";
+import { formatGPA } from "@/lib/gpa-calculator";
 
 const GRADE_COLORS = {
   "A+": "#10b981",
@@ -186,7 +187,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-blue-600">
-                  {data.overall.averageCGPA.toFixed(2)}
+                  {formatGPA(data.overall.averageCGPA)}
                 </div>
               </CardContent>
             </Card>
@@ -344,7 +345,7 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div className="text-2xl font-bold text-blue-600">
-                        {student.cgpa.toFixed(4)}
+                        {formatGPA(student.cgpa)}
                       </div>
                     </div>
                   ))}
