@@ -139,7 +139,12 @@ export async function getAllStudentsWithCGPA(
   // Calculate CGPA for each student
   return students
     .map((student) => {
-      const validGrades = student.grades.filter((g) => g.gradePoints > 0);
+      // Filter out non-GPA grades (P, N, W)
+      const validGrades = student.grades.filter((g) => {
+        const grade = g.grade?.toUpperCase().trim() || "";
+        return !["P", "N", "W"].includes(grade);
+      });
+
       const totalCredits = validGrades.reduce(
         (sum, g) => sum + g.module.credits,
         0,
@@ -204,7 +209,12 @@ export async function getStudentDetails(
   const semesters = Array.from(semesterMap.entries())
     .map(([key, grades]) => {
       const [yearName, semesterName] = key.split("|");
-      const validGrades = grades.filter((g) => g.gradePoints > 0);
+
+      const validGrades = grades.filter((g) => {
+        const grade = g.grade?.toUpperCase().trim() || "";
+        return !["P", "N", "W"].includes(grade);
+      });
+
       const totalCredits = validGrades.reduce(
         (sum, g) => sum + g.module.credits,
         0,
@@ -242,7 +252,11 @@ export async function getStudentDetails(
     });
 
   // Calculate overall CGPA
-  const allValidGrades = student.grades.filter((g) => g.gradePoints > 0);
+  const allValidGrades = student.grades.filter((g) => {
+    const grade = g.grade?.toUpperCase().trim() || "";
+    return !["P", "N", "W"].includes(grade);
+  });
+
   const totalCredits = allValidGrades.reduce(
     (sum, g) => sum + g.module.credits,
     0,

@@ -24,6 +24,9 @@ declare module "next-auth" {
       canScrape?: boolean;
       canParsePDF?: boolean;
       canManageAdmins?: boolean;
+      canAssignModules?: boolean;
+      canViewGrades?: boolean;
+      canEditGrades?: boolean;
     } & DefaultSession["user"];
   }
 
@@ -47,6 +50,9 @@ declare module "next-auth" {
     canScrape?: boolean;
     canParsePDF?: boolean;
     canManageAdmins?: boolean;
+    canAssignModules?: boolean;
+    canViewGrades?: boolean;
+    canEditGrades?: boolean;
   }
 }
 
@@ -71,5 +77,8 @@ declare module "next-auth/jwt" {
     canScrape?: boolean;
     canParsePDF?: boolean;
     canManageAdmins?: boolean;
+    canAssignModules?: boolean;
+    canViewGrades?: boolean;
+    canEditGrades?: boolean;
   }
 }

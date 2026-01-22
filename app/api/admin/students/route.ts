@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
         grades: {
           select: {
             gradePoints: true,
+            grade: true,
             module: {
               select: {
                 credits: true,
@@ -66,6 +67,10 @@ export async function GET(request: NextRequest) {
       let totalPoints = 0;
 
       for (const grade of student.grades) {
+        // Skip non-GPA grades (P=Pass, N=Not Graded, W=Withdrawn)
+        const gradeLetter = grade.grade?.toUpperCase().trim() || "";
+        if (["P", "N", "W"].includes(gradeLetter)) continue;
+
         const credits = grade.module.credits;
         const points = grade.gradePoints ?? 0;
         totalCredits += credits;
@@ -83,6 +88,7 @@ export async function GET(request: NextRequest) {
         totalCredits,
         batch: student.degree.batch.name,
         degree: student.degree.name,
+        moduleCount: student.grades.length, // Add module count for display
       };
     });
 
