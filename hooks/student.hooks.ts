@@ -18,6 +18,7 @@ export interface StudentDetails {
   totalCredits: number;
   semesters: SemesterData[];
   modules: ModuleGrade[];
+  totalPoints?: number;
 }
 
 interface StudentResponse {

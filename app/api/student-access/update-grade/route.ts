@@ -44,14 +44,9 @@ export async function POST(request: NextRequest) {
       "C+",
       "C",
       "C-",
-      "D+",
       "D",
-      "D-",
-      "E",
-      "F",
       "I",
-      "W",
-      "X",
+      "F",
     ];
 
     const normalizedGrade = grade.toUpperCase();

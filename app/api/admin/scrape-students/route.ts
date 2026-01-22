@@ -10,6 +10,9 @@ import {
   findStudentsByIndexNumbers,
   bulkCreateStudents,
 } from "@/lib/db/student.service";
+import { logActivity } from "@/lib/db/activity.service";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // Batch concurrency for optimized uploads
 const UPLOAD_BATCH_SIZE = 5;
@@ -57,6 +60,7 @@ async function uploadBatch(
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
     const { degree, batchNumber } = await request.json();
 
     if (!degree || !batchNumber) {
@@ -255,6 +259,17 @@ export async function POST(request: Request) {
           photosUploaded: totalUploaded,
           students: result.students,
         });
+
+        if (session && session.user) {
+          await logActivity("STUDENT_SCRAPED", {
+            adminName: session.user.name,
+            degree: degree.toUpperCase(),
+            batch: batchNumber,
+            count: result.count,
+            photosUploaded: totalUploaded,
+            timestamp: new Date().toISOString(),
+          });
+        }
 
         await writer.close();
       } catch (error) {

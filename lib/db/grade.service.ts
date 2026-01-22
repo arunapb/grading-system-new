@@ -128,15 +128,21 @@ export async function getPendingModulesForStudent(studentId: string) {
 }
 
 /**
- * Update a PENDING grade to an actual grade (ONE-TIME only).
- * Returns null if grade is not PENDING (already submitted).
+ * Grades that are editable (below C threshold)
+ * Students can update these grades until they reach C- or above
+ */
+const EDITABLE_GRADES = new Set(["PENDING", "D", "I", "F"]);
+
+/**
+ * Update a grade if it's still editable (PENDING, D, I, or F).
+ * Once a grade reaches C- or above, it cannot be changed.
  */
 export async function updatePendingGrade(
   studentId: string,
   moduleId: string,
   grade: string,
 ) {
-  // First check if the grade is PENDING
+  // First check if the grade exists and is editable
   const existing = await prisma.studentGrade.findUnique({
     where: {
       studentId_moduleId: { studentId, moduleId },
@@ -148,10 +154,11 @@ export async function updatePendingGrade(
     return { success: false, error: "Module not assigned to student" };
   }
 
-  if (existing.grade !== "PENDING") {
+  // Check if current grade is editable (PENDING, D, I, or F)
+  if (!EDITABLE_GRADES.has(existing.grade)) {
     return {
       success: false,
-      error: "Grade already submitted and cannot be changed",
+      error: "Grade has reached passing threshold and cannot be changed",
     };
   }
 

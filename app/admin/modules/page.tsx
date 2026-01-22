@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { HierarchicalSelector } from "@/components/admin/HierarchicalSelector";
+import { useSession } from "next-auth/react";
 import {
   useModules,
   useDeleteModule,
@@ -54,6 +55,10 @@ export default function ModulesPage() {
     year: "",
     semester: "",
   });
+
+  const { data: session } = useSession();
+  const user = session?.user as any;
+  const canEditModules = user?.role === "SUPER_ADMIN" || user?.canEditModules;
 
   const handleSelectionChange = useCallback(
     (sel: {
@@ -124,10 +129,12 @@ export default function ModulesPage() {
               Modules for {selection.degree} - {selection.year} -{" "}
               {selection.semester}
             </h2>
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Module
-            </Button>
+            {canEditModules && (
+              <Button onClick={() => setIsAddDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Module
+              </Button>
+            )}
           </div>
 
           {isLoading ? (
@@ -162,30 +169,34 @@ export default function ModulesPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Assign to Students"
-                          onClick={() => setAssigningModule(module)}
-                        >
-                          <UserPlus className="h-4 w-4 text-green-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Edit Module"
-                          onClick={() => setEditingModule(module)}
-                        >
-                          <Pencil className="h-4 w-4 text-blue-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Delete Module"
-                          onClick={() => setDeletingModule(module)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
+                        {canEditModules && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Assign to Students"
+                              onClick={() => setAssigningModule(module)}
+                            >
+                              <UserPlus className="h-4 w-4 text-green-600" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Edit Module"
+                              onClick={() => setEditingModule(module)}
+                            >
+                              <Pencil className="h-4 w-4 text-blue-600" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Delete Module"
+                              onClick={() => setDeletingModule(module)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

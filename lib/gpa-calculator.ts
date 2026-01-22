@@ -13,11 +13,8 @@ export const GRADE_POINTS: Record<string, number> = {
   C: 2.0,
   "C-": 1.7,
   D: 1.0,
-  F: 0.0,
   I: 0.0,
-  P: 0.0,
-  N: 0.0,
-  W: 0.0,
+  F: 0.0,
 };
 
 /**
@@ -34,9 +31,7 @@ export const ORDERED_GRADES = [
   "C+",
   "C",
   "C-",
-  "D+",
   "D",
-  "E",
   "I",
   "F",
 ] as const;

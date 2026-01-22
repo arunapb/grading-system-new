@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import {
   Card,
   CardContent,
@@ -91,6 +92,11 @@ export default function InvitationsPage() {
   const [selectedStudent, setSelectedStudent] = useState("");
   const [expiresInMinutes, setExpiresInMinutes] = useState("60");
   const [maxUses, setMaxUses] = useState("1");
+
+  const { data: session } = useSession();
+  const user = session?.user as any;
+  const canEditInvitations =
+    user?.role === "SUPER_ADMIN" || user?.canEditInvitations;
 
   // Fetch batches, degrees, and students
   const { data: batches = [] } = usePublicBatches();
@@ -211,129 +217,132 @@ export default function InvitationsPage() {
             Create and manage student access links
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Invitation
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create Student Invitation</DialogTitle>
-              <DialogDescription>
-                Generate a time-limited access link for a student
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Batch</Label>
-                <Select
-                  value={selectedBatch}
-                  onValueChange={(v) => {
-                    setSelectedBatch(v);
-                    setSelectedDegree("");
-                    setSelectedStudent("");
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select batch" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {batches.map((b: any) => (
-                      <SelectItem key={b.name} value={b.name}>
-                        {b.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Degree</Label>
-                <Select
-                  value={selectedDegree}
-                  onValueChange={(v) => {
-                    setSelectedDegree(v);
-                    setSelectedStudent("");
-                  }}
-                  disabled={!selectedBatch}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select degree" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {degrees.map((d: any) => (
-                      <SelectItem key={d.name} value={d.name}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Student</Label>
-                <SearchableStudentSelect
-                  students={students}
-                  selectedStudentId={selectedStudent}
-                  onSelect={setSelectedStudent}
-                  disabled={!selectedDegree}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+        </div>
+        {canEditInvitations && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Invitation
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Create Student Invitation</DialogTitle>
+                <DialogDescription>
+                  Generate a time-limited access link for a student
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label>Expires In</Label>
+                  <Label>Batch</Label>
                   <Select
-                    value={expiresInMinutes}
-                    onValueChange={setExpiresInMinutes}
+                    value={selectedBatch}
+                    onValueChange={(v) => {
+                      setSelectedBatch(v);
+                      setSelectedDegree("");
+                      setSelectedStudent("");
+                    }}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Select batch" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="15">15 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="120">2 hours</SelectItem>
-                      <SelectItem value="1440">24 hours</SelectItem>
+                      {batches.map((b: any) => (
+                        <SelectItem key={b.name} value={b.name}>
+                          {b.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div className="space-y-2">
-                  <Label>Max Uses</Label>
-                  <Select value={maxUses} onValueChange={setMaxUses}>
+                  <Label>Degree</Label>
+                  <Select
+                    value={selectedDegree}
+                    onValueChange={(v) => {
+                      setSelectedDegree(v);
+                      setSelectedStudent("");
+                    }}
+                    disabled={!selectedBatch}
+                  >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Select degree" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">1 use</SelectItem>
-                      <SelectItem value="2">2 uses</SelectItem>
-                      <SelectItem value="3">3 uses</SelectItem>
-                      <SelectItem value="5">5 uses</SelectItem>
-                      <SelectItem value="10">10 uses</SelectItem>
-                      <SelectItem value="1000">Unlimited (1000)</SelectItem>
+                      {degrees.map((d: any) => (
+                        <SelectItem key={d.name} value={d.name}>
+                          {d.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Student</Label>
+                  <SearchableStudentSelect
+                    students={students}
+                    selectedStudentId={selectedStudent}
+                    onSelect={setSelectedStudent}
+                    disabled={!selectedDegree}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Expires In</Label>
+                    <Select
+                      value={expiresInMinutes}
+                      onValueChange={setExpiresInMinutes}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="15">15 minutes</SelectItem>
+                        <SelectItem value="30">30 minutes</SelectItem>
+                        <SelectItem value="60">1 hour</SelectItem>
+                        <SelectItem value="120">2 hours</SelectItem>
+                        <SelectItem value="1440">24 hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Max Uses</Label>
+                    <Select value={maxUses} onValueChange={setMaxUses}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 use</SelectItem>
+                        <SelectItem value="2">2 uses</SelectItem>
+                        <SelectItem value="3">3 uses</SelectItem>
+                        <SelectItem value="5">5 uses</SelectItem>
+                        <SelectItem value="10">10 uses</SelectItem>
+                        <SelectItem value="1000">Unlimited (1000)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={createMutation.isPending || !selectedStudent}
-              >
-                {createMutation.isPending
-                  ? "Creating..."
-                  : "Create & Copy Link"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreate}
+                  disabled={createMutation.isPending || !selectedStudent}
+                >
+                  {createMutation.isPending
+                    ? "Creating..."
+                    : "Create & Copy Link"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <Card>
@@ -473,13 +482,15 @@ export default function InvitationsPage() {
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteMutation.mutate(inv.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEditInvitations && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteMutation.mutate(inv.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

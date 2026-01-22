@@ -42,6 +42,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
   useAdmins,
@@ -74,12 +75,34 @@ export default function AdminsPage() {
     name: "",
     username: "",
     password: "",
+    canViewStructure: true,
+    canEditStructure: false,
+    canViewStudents: true,
+    canEditStudents: false,
+    canViewModules: true,
+    canEditModules: false,
+    canViewInvitations: false,
+    canEditInvitations: false,
+    canScrape: false,
+    canParsePDF: false,
+    canManageAdmins: false,
   });
 
   const [editData, setEditData] = useState({
     name: "",
     username: "",
     password: "",
+    canViewStructure: true,
+    canEditStructure: false,
+    canViewStudents: true,
+    canEditStudents: false,
+    canViewModules: true,
+    canEditModules: false,
+    canViewInvitations: false,
+    canEditInvitations: false,
+    canScrape: false,
+    canParsePDF: false,
+    canManageAdmins: false,
   });
 
   const [resetCodeData, setResetCodeData] = useState<{
@@ -94,7 +117,22 @@ export default function AdminsPage() {
       await createAdmin.mutateAsync(createData);
       toast.success("Admin created successfully");
       setShowCreateDialog(false);
-      setCreateData({ name: "", username: "", password: "" });
+      setCreateData({
+        name: "",
+        username: "",
+        password: "",
+        canViewStructure: true,
+        canEditStructure: false,
+        canViewStudents: true,
+        canEditStudents: false,
+        canViewModules: true,
+        canEditModules: false,
+        canViewInvitations: false,
+        canEditInvitations: false,
+        canScrape: false,
+        canParsePDF: false,
+        canManageAdmins: false,
+      });
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -109,7 +147,23 @@ export default function AdminsPage() {
       payload.name = editData.name;
     if (editData.username && editData.username !== selectedAdmin.username)
       payload.username = editData.username;
+    if (editData.username && editData.username !== selectedAdmin.username)
+      payload.username = editData.username;
     if (editData.password) payload.password = editData.password;
+
+    // permissions
+    // permissions
+    payload.canViewStructure = editData.canViewStructure;
+    payload.canEditStructure = editData.canEditStructure;
+    payload.canViewStudents = editData.canViewStudents;
+    payload.canEditStudents = editData.canEditStudents;
+    payload.canViewModules = editData.canViewModules;
+    payload.canEditModules = editData.canEditModules;
+    payload.canViewInvitations = editData.canViewInvitations;
+    payload.canEditInvitations = editData.canEditInvitations;
+    payload.canScrape = editData.canScrape;
+    payload.canParsePDF = editData.canParsePDF;
+    payload.canManageAdmins = editData.canManageAdmins;
 
     try {
       await updateAdmin.mutateAsync(payload);
@@ -173,6 +227,17 @@ export default function AdminsPage() {
       name: admin.name,
       username: admin.username,
       password: "",
+      canViewStructure: admin.canViewStructure || false,
+      canEditStructure: admin.canEditStructure || false,
+      canViewStudents: admin.canViewStudents || false,
+      canEditStudents: admin.canEditStudents || false,
+      canViewModules: admin.canViewModules || false,
+      canEditModules: admin.canEditModules || false,
+      canViewInvitations: admin.canViewInvitations || false,
+      canEditInvitations: admin.canEditInvitations || false,
+      canScrape: admin.canScrape || false,
+      canParsePDF: admin.canParsePDF || false,
+      canManageAdmins: admin.canManageAdmins || false,
     });
     setShowEditDialog(true);
   };
@@ -427,6 +492,248 @@ export default function AdminsPage() {
                   required
                 />
               </div>
+
+              <div className="space-y-4 pt-2">
+                <Label>Permissions</Label>
+                <div className="max-h-[40vh] overflow-y-auto pr-2 border rounded-md p-3 space-y-4">
+                  {/* Structure */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">
+                      Structure (Batches, Degrees, etc.)
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="create-view-structure"
+                          checked={createData.canViewStructure}
+                          onCheckedChange={(checked) =>
+                            setCreateData({
+                              ...createData,
+                              canViewStructure: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="create-view-structure"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          View
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="create-edit-structure"
+                          checked={createData.canEditStructure}
+                          onCheckedChange={(checked) =>
+                            setCreateData({
+                              ...createData,
+                              canEditStructure: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="create-edit-structure"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Edit
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Students */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Students</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="create-view-students"
+                          checked={createData.canViewStudents}
+                          onCheckedChange={(checked) =>
+                            setCreateData({
+                              ...createData,
+                              canViewStudents: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="create-view-students"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          View
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="create-edit-students"
+                          checked={createData.canEditStudents}
+                          onCheckedChange={(checked) =>
+                            setCreateData({
+                              ...createData,
+                              canEditStudents: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="create-edit-students"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Edit
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Modules */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Modules</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="create-view-modules"
+                          checked={createData.canViewModules}
+                          onCheckedChange={(checked) =>
+                            setCreateData({
+                              ...createData,
+                              canViewModules: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="create-view-modules"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          View
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="create-edit-modules"
+                          checked={createData.canEditModules}
+                          onCheckedChange={(checked) =>
+                            setCreateData({
+                              ...createData,
+                              canEditModules: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="create-edit-modules"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Edit
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Invitations */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Invitations</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="create-view-invitations"
+                          checked={createData.canViewInvitations}
+                          onCheckedChange={(checked) =>
+                            setCreateData({
+                              ...createData,
+                              canViewInvitations: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="create-view-invitations"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          View
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="create-edit-invitations"
+                          checked={createData.canEditInvitations}
+                          onCheckedChange={(checked) =>
+                            setCreateData({
+                              ...createData,
+                              canEditInvitations: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="create-edit-invitations"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Edit
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Other Tools */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">
+                      Tools & System
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="create-scrape"
+                          checked={createData.canScrape}
+                          onCheckedChange={(checked) =>
+                            setCreateData({
+                              ...createData,
+                              canScrape: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="create-scrape"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Scraper
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="create-parse-pdf"
+                          checked={createData.canParsePDF}
+                          onCheckedChange={(checked) =>
+                            setCreateData({
+                              ...createData,
+                              canParsePDF: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="create-parse-pdf"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          PDF Parser
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="create-manage-admins"
+                          checked={createData.canManageAdmins}
+                          onCheckedChange={(checked) =>
+                            setCreateData({
+                              ...createData,
+                              canManageAdmins: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="create-manage-admins"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Manage Admins
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button
@@ -494,6 +801,248 @@ export default function AdminsPage() {
                     setEditData({ ...editData, password: e.target.value })
                   }
                 />
+              </div>
+
+              <div className="space-y-4 pt-2">
+                <Label>Permissions</Label>
+                <div className="max-h-[40vh] overflow-y-auto pr-2 border rounded-md p-3 space-y-4">
+                  {/* Structure */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">
+                      Structure (Batches, Degrees, etc.)
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-view-structure"
+                          checked={editData.canViewStructure}
+                          onCheckedChange={(checked) =>
+                            setEditData({
+                              ...editData,
+                              canViewStructure: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="edit-view-structure"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          View
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-edit-structure"
+                          checked={editData.canEditStructure}
+                          onCheckedChange={(checked) =>
+                            setEditData({
+                              ...editData,
+                              canEditStructure: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="edit-edit-structure"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Edit
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Students */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Students</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-view-students"
+                          checked={editData.canViewStudents}
+                          onCheckedChange={(checked) =>
+                            setEditData({
+                              ...editData,
+                              canViewStudents: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="edit-view-students"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          View
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-edit-students"
+                          checked={editData.canEditStudents}
+                          onCheckedChange={(checked) =>
+                            setEditData({
+                              ...editData,
+                              canEditStudents: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="edit-edit-students"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Edit
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Modules */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Modules</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-view-modules"
+                          checked={editData.canViewModules}
+                          onCheckedChange={(checked) =>
+                            setEditData({
+                              ...editData,
+                              canViewModules: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="edit-view-modules"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          View
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-edit-modules"
+                          checked={editData.canEditModules}
+                          onCheckedChange={(checked) =>
+                            setEditData({
+                              ...editData,
+                              canEditModules: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="edit-edit-modules"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Edit
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Invitations */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Invitations</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-view-invitations"
+                          checked={editData.canViewInvitations}
+                          onCheckedChange={(checked) =>
+                            setEditData({
+                              ...editData,
+                              canViewInvitations: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="edit-view-invitations"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          View
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-edit-invitations"
+                          checked={editData.canEditInvitations}
+                          onCheckedChange={(checked) =>
+                            setEditData({
+                              ...editData,
+                              canEditInvitations: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="edit-edit-invitations"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Edit
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Other Tools */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">
+                      Tools & System
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-scrape"
+                          checked={editData.canScrape}
+                          onCheckedChange={(checked) =>
+                            setEditData({
+                              ...editData,
+                              canScrape: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="edit-scrape"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Scraper
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-parse-pdf"
+                          checked={editData.canParsePDF}
+                          onCheckedChange={(checked) =>
+                            setEditData({
+                              ...editData,
+                              canParsePDF: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="edit-parse-pdf"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          PDF Parser
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="edit-manage-admins"
+                          checked={editData.canManageAdmins}
+                          onCheckedChange={(checked) =>
+                            setEditData({
+                              ...editData,
+                              canManageAdmins: checked === true,
+                            })
+                          }
+                        />
+                        <Label
+                          htmlFor="edit-manage-admins"
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          Manage Admins
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             <DialogFooter>

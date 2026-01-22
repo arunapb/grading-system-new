@@ -2,6 +2,7 @@
 
 import { useAdminStudent } from "@/hooks/student.hooks";
 import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   Card,
   CardContent,
@@ -28,6 +29,7 @@ import {
   Calendar,
   BookOpen,
   Pencil,
+  TrendingUp,
 } from "lucide-react";
 import {
   Dialog,
@@ -53,7 +55,11 @@ import { ORDERED_GRADES, formatGPA } from "@/lib/gpa-calculator";
 export default function StudentDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const id = params.id as string;
+
+  const user = session?.user as any;
+  const canEditStudents = user?.role === "SUPER_ADMIN" || user?.canEditStudents;
 
   const { data: student, isLoading, error, refetch } = useAdminStudent(id);
 
@@ -198,14 +204,16 @@ export default function StudentDetailsPage() {
             <h1 className="text-2xl font-bold tracking-tight">
               {student.name}
             </h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setIsProfileOpen(true)}
-            >
-              <Pencil className="h-4 w-4 text-muted-foreground" />
-            </Button>
+            {canEditStudents && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setIsProfileOpen(true)}
+              >
+                <Pencil className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            )}
           </div>
           <p className="text-muted-foreground flex items-center gap-2">
             <span className="font-mono">{student.indexNumber}</span>
@@ -272,12 +280,15 @@ export default function StudentDetailsPage() {
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Current CGPA
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Current CGPA
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold flex items-center gap-2">
+              <div className="text-3xl font-bold flex items-center gap-2 text-blue-600">
                 {formatGPA(student.cgpa)}
                 <Badge className={prediction.color}>{prediction.class}</Badge>
               </div>
@@ -286,23 +297,36 @@ export default function StudentDetailsPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Credits
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Credits
+                </CardTitle>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{student.totalCredits}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Completed Credits
-              </p>
+              <div className="flex justify-between items-center mt-1">
+                <p className="text-xs text-muted-foreground">
+                  Completed Credits
+                </p>
+                {student.totalPoints !== undefined && (
+                  <Badge variant="secondary" className="text-xs">
+                    {student.totalPoints.toFixed(2)} Points
+                  </Badge>
+                )}
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Semesters
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Semesters
+                </CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
@@ -328,14 +352,16 @@ export default function StudentDetailsPage() {
                 <div className="space-y-1">
                   <CardTitle className="flex items-center gap-2">
                     {semester.name}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => handleEditGrades(semester)}
-                    >
-                      <Pencil className="h-3 w-3 text-muted-foreground" />
-                    </Button>
+                    {canEditStudents && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleEditGrades(semester)}
+                      >
+                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                      </Button>
+                    )}
                   </CardTitle>
                   <CardDescription>
                     GPA:{" "}

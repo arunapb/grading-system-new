@@ -23,10 +23,15 @@ import { Badge } from "@/components/ui/badge";
 import { AddBatchDialog } from "@/components/admin/AddBatchDialog";
 import { useBatches } from "@/hooks/batch.hooks";
 import { formatGPA } from "@/lib/gpa-calculator";
+import { useSession } from "next-auth/react";
 
 export default function BatchesPage() {
   const { data: batches, isLoading, refetch } = useBatches();
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const { data: session } = useSession();
+  const user = session?.user as any;
+  const canEditStructure =
+    user?.role === "SUPER_ADMIN" || user?.canEditStructure;
 
   return (
     <div className="container mx-auto px-6 py-8">
@@ -40,10 +45,13 @@ export default function BatchesPage() {
             Manage batches, degrees, and view statistics
           </p>
         </div>
-        <Button onClick={() => setShowAddDialog(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Batch
-        </Button>
+        </div>
+        {canEditStructure && (
+          <Button onClick={() => setShowAddDialog(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Batch
+          </Button>
+        )}
       </div>
 
       {/* Batches Table */}

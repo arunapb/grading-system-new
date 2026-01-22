@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
-import { Users } from "lucide-react";
+import { Users, TrendingUp, Award, BookOpen, Layers } from "lucide-react";
 import { useStudents } from "@/hooks/student.hooks";
 import { formatGPA } from "@/lib/gpa-calculator";
 
@@ -77,9 +77,12 @@ export default function StudentsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Students
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Total Students
+                  </CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{students.length}</div>
@@ -87,9 +90,12 @@ export default function StudentsPage() {
             </Card>
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Average CGPA
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Average CGPA
+                  </CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-blue-600">
@@ -99,9 +105,12 @@ export default function StudentsPage() {
             </Card>
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Top CGPA
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Top CGPA
+                  </CardTitle>
+                  <Award className="h-4 w-4 text-muted-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-green-600">
@@ -111,9 +120,12 @@ export default function StudentsPage() {
             </Card>
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total GPA Credits
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Total GPA Credits
+                  </CardTitle>
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-purple-600">
@@ -123,9 +135,12 @@ export default function StudentsPage() {
             </Card>
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Modules
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Total Modules
+                  </CardTitle>
+                  <Layers className="h-4 w-4 text-muted-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-orange-600">

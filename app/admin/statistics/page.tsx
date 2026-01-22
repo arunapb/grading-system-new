@@ -73,65 +73,63 @@ export default function StatisticsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Batches
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Batches
+              </CardTitle>
+              <GraduationCap className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-blue-600" />
-              <span className="text-3xl font-bold">
-                {data.overall.totalBatches}
-              </span>
+            <div className="text-3xl font-bold">
+              {data.overall.totalBatches}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Students
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Students
+              </CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-green-600" />
-              <span className="text-3xl font-bold">
-                {data.overall.totalStudents}
-              </span>
+            <div className="text-3xl font-bold">
+              {data.overall.totalStudents}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Average CGPA
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Average CGPA
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
-              <span className="text-3xl font-bold">
-                {formatGPA(data.overall.averageCGPA)}
-              </span>
+            <div className="text-3xl font-bold text-blue-600">
+              {formatGPA(data.overall.averageCGPA)}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total PDFs
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total PDFs
+              </CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-orange-600" />
-              <span className="text-3xl font-bold">
-                {data.overall.totalPDFs}
-              </span>
-            </div>
+            <div className="text-3xl font-bold">{data.overall.totalPDFs}</div>
           </CardContent>
         </Card>
       </div>
