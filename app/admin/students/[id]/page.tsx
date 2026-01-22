@@ -341,9 +341,9 @@ export default function StudentDetailsPage() {
                 <p className="text-xs text-muted-foreground">
                   Completed Credits
                 </p>
-                {student.totalPoints !== undefined && (
+                {student.totalPoints != null && (
                   <Badge variant="secondary" className="text-xs">
-                    {student.totalPoints.toFixed(2)} Points
+                    {student.totalPoints?.toFixed(2)} Points
                   </Badge>
                 )}
               </div>
