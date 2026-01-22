@@ -45,7 +45,7 @@ export default function BatchesPage() {
             Manage batches, degrees, and view statistics
           </p>
         </div>
-        </div>
+
         {canEditStructure && (
           <Button onClick={() => setShowAddDialog(true)} className="gap-2">
             <Plus className="h-4 w-4" />

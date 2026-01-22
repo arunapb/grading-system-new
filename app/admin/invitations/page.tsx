@@ -217,7 +217,7 @@ export default function InvitationsPage() {
             Create and manage student access links
           </p>
         </div>
-        </div>
+
         {canEditInvitations && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -328,7 +328,10 @@ export default function InvitationsPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button
