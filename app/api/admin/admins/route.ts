@@ -23,6 +23,18 @@ export async function GET() {
         resetCode: true,
         resetCodeExpiresAt: true,
         createdAt: true,
+        // Permissions - View/Edit pairs
+        canViewStructure: true,
+        canEditStructure: true,
+        canViewStudents: true,
+        canEditStudents: true,
+        canViewModules: true,
+        canEditModules: true,
+        canViewInvitations: true,
+        canEditInvitations: true,
+        canScrape: true,
+        canParsePDF: true,
+        canManageAdmins: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -44,7 +56,22 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, username, password } = body;
+    const {
+      name,
+      username,
+      password,
+      canViewStructure,
+      canEditStructure,
+      canViewStudents,
+      canEditStudents,
+      canViewModules,
+      canEditModules,
+      canViewInvitations,
+      canEditInvitations,
+      canScrape,
+      canParsePDF,
+      canManageAdmins,
+    } = body;
 
     if (!name || !username || !password) {
       return new NextResponse("Name, username, and password are required", {
@@ -64,14 +91,26 @@ export async function POST(req: Request) {
     // Hash password
     const hashedPassword = await hash(password, 12);
 
-    // Create admin with PENDING status (needs approval)
+    // Create admin with APPROVED status (Super Admin creates)
     const newAdmin = await prisma.admin.create({
       data: {
         name,
         username,
         password: hashedPassword,
         role: "ADMIN",
-        status: "APPROVED", // Auto-approve when Super Admin creates
+        status: "APPROVED",
+        // Permissions - View/Edit pairs
+        canViewStructure: canViewStructure ?? true,
+        canEditStructure: canEditStructure ?? false,
+        canViewStudents: canViewStudents ?? true,
+        canEditStudents: canEditStudents ?? false,
+        canViewModules: canViewModules ?? true,
+        canEditModules: canEditModules ?? false,
+        canViewInvitations: canViewInvitations ?? true,
+        canEditInvitations: canEditInvitations ?? false,
+        canScrape: canScrape ?? false,
+        canParsePDF: canParsePDF ?? false,
+        canManageAdmins: canManageAdmins ?? false,
       },
       select: {
         id: true,
@@ -80,6 +119,17 @@ export async function POST(req: Request) {
         role: true,
         status: true,
         createdAt: true,
+        canViewStructure: true,
+        canEditStructure: true,
+        canViewStudents: true,
+        canEditStudents: true,
+        canViewModules: true,
+        canEditModules: true,
+        canViewInvitations: true,
+        canEditInvitations: true,
+        canScrape: true,
+        canParsePDF: true,
+        canManageAdmins: true,
       },
     });
 
@@ -140,7 +190,24 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { id, status, name, username, password } = body;
+    const {
+      id,
+      status,
+      name,
+      username,
+      password,
+      canViewStructure,
+      canEditStructure,
+      canViewStudents,
+      canEditStudents,
+      canViewModules,
+      canEditModules,
+      canViewInvitations,
+      canEditInvitations,
+      canScrape,
+      canParsePDF,
+      canManageAdmins,
+    } = body;
 
     if (!id) {
       return new NextResponse("Admin ID is required", { status: 400 });
@@ -177,6 +244,28 @@ export async function PATCH(req: Request) {
       updateData.password = await hash(password, 12);
     }
 
+    // Permissions (Check undefined explicitly to allow false)
+    if (canViewStructure !== undefined)
+      updateData.canViewStructure = canViewStructure;
+    if (canEditStructure !== undefined)
+      updateData.canEditStructure = canEditStructure;
+    if (canViewStudents !== undefined)
+      updateData.canViewStudents = canViewStudents;
+    if (canEditStudents !== undefined)
+      updateData.canEditStudents = canEditStudents;
+    if (canViewModules !== undefined)
+      updateData.canViewModules = canViewModules;
+    if (canEditModules !== undefined)
+      updateData.canEditModules = canEditModules;
+    if (canViewInvitations !== undefined)
+      updateData.canViewInvitations = canViewInvitations;
+    if (canEditInvitations !== undefined)
+      updateData.canEditInvitations = canEditInvitations;
+    if (canScrape !== undefined) updateData.canScrape = canScrape;
+    if (canParsePDF !== undefined) updateData.canParsePDF = canParsePDF;
+    if (canManageAdmins !== undefined)
+      updateData.canManageAdmins = canManageAdmins;
+
     const updatedAdmin = await prisma.admin.update({
       where: { id },
       data: updateData,
@@ -187,6 +276,17 @@ export async function PATCH(req: Request) {
         role: true,
         status: true,
         createdAt: true,
+        canViewStructure: true,
+        canEditStructure: true,
+        canViewStudents: true,
+        canEditStudents: true,
+        canViewModules: true,
+        canEditModules: true,
+        canViewInvitations: true,
+        canEditInvitations: true,
+        canScrape: true,
+        canParsePDF: true,
+        canManageAdmins: true,
       },
     });
 
