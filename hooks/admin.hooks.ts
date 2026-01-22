@@ -38,6 +38,18 @@ export interface AdminUser {
   resetCode?: string | null;
   resetCodeExpiresAt?: string | null;
   createdAt: string;
+  // Granular Permissions - View/Edit pairs
+  canViewStructure?: boolean;
+  canEditStructure?: boolean;
+  canViewStudents?: boolean;
+  canEditStudents?: boolean;
+  canViewModules?: boolean;
+  canEditModules?: boolean;
+  canViewInvitations?: boolean;
+  canEditInvitations?: boolean;
+  canScrape?: boolean;
+  canParsePDF?: boolean;
+  canManageAdmins?: boolean;
 }
 
 // Hooks
@@ -158,6 +170,17 @@ export function useCreateAdmin() {
       name: string;
       username: string;
       password: string;
+      canViewStructure?: boolean;
+      canEditStructure?: boolean;
+      canViewStudents?: boolean;
+      canEditStudents?: boolean;
+      canViewModules?: boolean;
+      canEditModules?: boolean;
+      canViewInvitations?: boolean;
+      canEditInvitations?: boolean;
+      canScrape?: boolean;
+      canParsePDF?: boolean;
+      canManageAdmins?: boolean;
     }) => {
       const response = await fetch("/api/admin/admins", {
         method: "POST",
@@ -185,6 +208,17 @@ export function useUpdateAdmin() {
       username?: string;
       password?: string;
       status?: "PENDING" | "APPROVED" | "BLOCKED";
+      canViewStructure?: boolean;
+      canEditStructure?: boolean;
+      canViewStudents?: boolean;
+      canEditStudents?: boolean;
+      canViewModules?: boolean;
+      canEditModules?: boolean;
+      canViewInvitations?: boolean;
+      canEditInvitations?: boolean;
+      canScrape?: boolean;
+      canParsePDF?: boolean;
+      canManageAdmins?: boolean;
     }) => {
       const response = await fetch("/api/admin/admins", {
         method: "PATCH",
