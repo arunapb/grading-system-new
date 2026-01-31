@@ -1,6 +1,6 @@
 /**
  * IP Geolocation Utility
- * Uses ip-api.com (free for non-commercial use, 45 requests/min limit)
+ * Uses ipgeolocation.io (Requires API Key, 1000 requests/day on Free Tier)
  */
 
 export interface GeoLocationData {
@@ -36,34 +36,42 @@ export async function getGeoLocation(ip: string): Promise<GeoLocationData> {
   }
 
   try {
-    // ip-api.com free endpoint (http only, no API key needed)
-    // Fields: country, regionName, city, lat, lon, isp, org, timezone
+    // Rate limit: 1000 requests/day (Free Tier)
+    const apiKey = process.env.IP_GEOLOCATION_API_KEY;
+
+    if (!apiKey) {
+      console.warn(
+        "IP_GEOLOCATION_API_KEY is not set. Geolocation lookup skipped.",
+      );
+      return defaultData;
+    }
+
     const response = await fetch(
-      `http://ip-api.com/json/${ip}?fields=status,country,regionName,city,lat,lon,isp,org,timezone`,
-      { next: { revalidate: 3600 } }, // Cache for 1 hour
+      `https://api.ipgeolocation.io/ipgeo?apiKey=${apiKey}&ip=${ip}`,
+      { next: { revalidate: 3600 } },
     );
 
     if (!response.ok) {
-      console.error("Geolocation API error:", response.status);
+      console.error(
+        "Geolocation API error:",
+        response.status,
+        response.statusText,
+      );
       return defaultData;
     }
 
     const data = await response.json();
 
-    if (data.status === "fail") {
-      console.warn("Geolocation lookup failed for IP:", ip, data.message);
-      return defaultData;
-    }
-
+    // Note: ISP/Org fields may be restricted on Free Tier
     return {
-      country: data.country || null,
-      region: data.regionName || null,
+      country: data.country_name || null,
+      region: data.state_prov || data.district || null,
       city: data.city || null,
-      lat: data.lat || null,
-      lon: data.lon || null,
+      lat: data.latitude ? parseFloat(data.latitude) : null,
+      lon: data.longitude ? parseFloat(data.longitude) : null,
       isp: data.isp || null,
-      org: data.org || null,
-      timezone: data.timezone || null,
+      org: data.organization || null,
+      timezone: data.time_zone ? data.time_zone.name : null,
     };
   } catch (error) {
     console.error("Failed to fetch geolocation:", error);
