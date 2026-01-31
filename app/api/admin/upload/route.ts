@@ -28,6 +28,8 @@ interface UploadResult {
 }
 
 import { requireAdminAuth } from "@/lib/auth";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 
 export async function POST(request: NextRequest) {
   if (!(await requireAdminAuth())) {
@@ -251,6 +253,7 @@ export async function POST(request: NextRequest) {
         successCount++;
 
         // Log activity to database
+        const session = await getServerSession(authOptions);
         await logActivity(
           "PDF_UPLOADED",
           {
@@ -262,6 +265,11 @@ export async function POST(request: NextRequest) {
             parsed,
             studentCount,
             savedToDatabase,
+            // User Data
+            userName: session?.user?.name,
+            userType: "admin",
+            role: (session?.user as any)?.role,
+            geo: (session?.user as any)?.geo,
           },
           true,
         );

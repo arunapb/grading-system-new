@@ -186,6 +186,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  let userInfo: any = {};
+
   try {
     // Check for canEditStudents permission
     const permResult = await checkPermission("canEditStudents");
@@ -193,6 +195,17 @@ export async function PATCH(
       return permResult.response;
     }
     const { session } = permResult;
+
+    // Capture user info for logging
+    if (session?.user) {
+      userInfo = {
+        userName: session.user.name,
+        userType: "admin",
+        role: (session.user as any).role,
+        updatedBy: (session.user as any).username,
+        geo: (session.user as any).geo,
+      };
+    }
 
     const { id } = await params;
     const body = await request.json();
@@ -227,6 +240,9 @@ export async function PATCH(
           previous: { name: student.name, indexNumber: student.indexNumber },
           updated: { name, indexNumber },
           updatedBy: (session.user as any).username,
+          userName: session.user.name,
+          userType: "admin",
+          role: (session.user as any).role,
         },
         true,
       );
@@ -281,6 +297,9 @@ export async function PATCH(
           studentId: id,
           updatedCount: grades.length,
           updatedBy: (session.user as any).username,
+          userName: session.user.name,
+          userType: "admin",
+          role: (session.user as any).role,
         },
         true,
       );
@@ -291,7 +310,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid update type" }, { status: 400 });
   } catch (error) {
     console.error("Error updating student:", error);
-    await logActivity("STUDENT_UPDATE_FAILED", { error: String(error) }, false);
+    await logActivity(
+      "STUDENT_UPDATE_FAILED",
+      { error: String(error), ...userInfo },
+      false,
+    );
     return NextResponse.json(
       { error: "Failed to update student" },
       { status: 500 },

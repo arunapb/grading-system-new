@@ -27,6 +27,7 @@ declare module "next-auth" {
       canAssignModules?: boolean;
       canViewGrades?: boolean;
       canEditGrades?: boolean;
+      geo?: any;
     } & DefaultSession["user"];
   }
 
@@ -38,6 +39,7 @@ declare module "next-auth" {
     degree?: string;
     indexNumber?: string;
     lectureCode?: string;
+    geo?: any;
     // Permissions
     canViewStructure?: boolean;
     canEditStructure?: boolean;
@@ -65,6 +67,8 @@ declare module "next-auth/jwt" {
     degree?: string;
     indexNumber?: string;
     lectureCode?: string;
+    adminSessionExpires?: number;
+    geo?: any;
     // Permissions
     canViewStructure?: boolean;
     canEditStructure?: boolean;

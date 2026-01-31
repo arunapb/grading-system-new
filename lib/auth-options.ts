@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { validateStudent, validateLecturer, validateAdmin } from "@/lib/auth";
 import { logActivity } from "@/lib/db/activity.service";
+import { getGeoLocation } from "@/lib/geolocation";
 import { headers } from "next/headers";
 
 export const authOptions: NextAuthOptions = {
@@ -157,13 +158,18 @@ export const authOptions: NextAuthOptions = {
         token.type = (user as any).type;
         token.role = (user as any).role;
         token.status = (user as any).status;
-        token.batch = (user as any).batch;
         token.degree = (user as any).degree;
         token.indexNumber = (user as any).indexNumber;
         token.lectureCode = (user as any).lectureCode;
 
-        // Admin Session Expiration (1 hour)
-        if (token.type === "admin") {
+        // Fetch and store Geolocation
+        const headersList = await headers();
+        const forwardedFor = headersList.get("x-forwarded-for");
+        const ip = forwardedFor ? forwardedFor.split(",")[0] : "Unknown";
+        token.geo = await getGeoLocation(ip);
+
+        // Admin & Super Admin Session Expiration (1 hour)
+        if (token.type === "admin" || token.role === "SUPER_ADMIN") {
           token.adminSessionExpires = Date.now() + 60 * 60 * 1000;
         }
         // Permissions
@@ -206,6 +212,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).degree = token.degree;
         (session.user as any).indexNumber = token.indexNumber;
         (session.user as any).lectureCode = token.lectureCode;
+        (session.user as any).geo = token.geo;
         // Permissions
         (session.user as any).canViewStructure = token.canViewStructure;
         (session.user as any).canEditStructure = token.canEditStructure;
@@ -234,6 +241,9 @@ export const authOptions: NextAuthOptions = {
       const forwardedFor = headersList.get("x-forwarded-for");
       const ip = forwardedFor ? forwardedFor.split(",")[0] : "Unknown";
 
+      // Fetch Geolocation
+      const geo = await getGeoLocation(ip);
+
       await logActivity("USER_LOGIN", {
         userId: user.id,
         userName: user.name,
@@ -242,6 +252,7 @@ export const authOptions: NextAuthOptions = {
         provider: account?.provider,
         userAgent,
         ip,
+        geo, // Add geolocation data
         timestamp: new Date().toISOString(),
       });
     },

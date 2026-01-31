@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateInvitation } from "@/lib/db/invitation.service";
 import { updatePendingGrade } from "@/lib/db/grade.service";
 import { logActivity } from "@/lib/db/activity.service";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 import prisma from "@/lib/db/prisma";
 import { gradeToPoints } from "@/lib/gpa-calculator";
 
@@ -120,6 +122,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log activity with student info
+    const session = await getServerSession(authOptions);
     await logActivity("STUDENT_GRADE_UPDATED", {
       studentId,
       studentIndexNumber: student.indexNumber,
@@ -129,6 +132,7 @@ export async function POST(request: NextRequest) {
       moduleName: updateResult.grade?.module.name,
       newGrade: normalizedGrade,
       userType: "student",
+      geo: (session?.user as any)?.geo,
     });
 
     return NextResponse.json({

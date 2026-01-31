@@ -268,6 +268,10 @@ export async function POST(request: Request) {
         if (session && session.user) {
           await logActivity("STUDENT_SCRAPED", {
             adminName: session.user.name,
+            userName: session.user.name,
+            userType: "admin",
+            role: (session.user as any).role,
+            geo: (session.user as any).geo,
             degree: degree.toUpperCase(),
             batch: batchNumber,
             count: result.count,

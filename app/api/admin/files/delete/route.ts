@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { logActivity } from "@/lib/db/activity.service";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 
 interface DeleteRequest {
   moduleIds?: string[];
@@ -102,6 +104,7 @@ export async function POST(request: NextRequest) {
         });
 
         // Log activity
+        const session = await getServerSession(authOptions);
         await logActivity(
           "MODULE_DELETED",
           {
@@ -112,6 +115,11 @@ export async function POST(request: NextRequest) {
             degree: module.semester.year.degree.name,
             year: module.semester.year.name,
             semester: module.semester.name,
+            // User Data
+            userName: session?.user?.name,
+            userType: "admin",
+            role: (session?.user as any)?.role,
+            geo: (session?.user as any)?.geo,
           },
           true,
         );

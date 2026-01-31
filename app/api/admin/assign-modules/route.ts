@@ -70,7 +70,11 @@ export async function POST(request: NextRequest) {
       studentCount: targetStudentIds.length,
       assignedCount: result.count,
       assignedBy: (session?.user as any)?.username || session?.user?.email,
+      userName: session?.user?.name,
+      adminName: session?.user?.name,
       userType: "admin",
+      role: (session?.user as any)?.role,
+      geo: (session?.user as any)?.geo,
     });
 
     return NextResponse.json({
