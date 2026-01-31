@@ -4,6 +4,8 @@ import { gradeToPoints } from "@/lib/gpa-calculator";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { NextRequest, NextResponse } from "next/server";
+import { logActivity } from "@/lib/db/activity.service";
+import { getGeoLocation } from "@/lib/geolocation";
 
 // POST - Add or update a grade for a student (admin only)
 import { requireAdminAuth, getAdminSession } from "@/lib/auth";
@@ -81,6 +83,22 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await upsertGrade(studentId, moduleId, grade.toUpperCase());
+
+    // Log Activity
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0] || "Unknown";
+    const geo = await getGeoLocation(ip);
+
+    await logActivity("GRADE_UPDATED", {
+      studentId,
+      moduleId,
+      grade: grade.toUpperCase(),
+      previousGrade: existingGrade?.grade || null,
+      updatedBy: (session.user as any).username || session.user.email,
+      role: (session.user as any).role,
+      geo,
+    });
+
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error adding/updating grade:", error);
@@ -180,6 +198,18 @@ export async function DELETE(request: NextRequest) {
 
     await prisma.studentGrade.delete({
       where: { id: gradeId },
+    });
+
+    // Log Activity
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0] || "Unknown";
+    const geo = await getGeoLocation(ip);
+
+    await logActivity("GRADE_DELETED", {
+      gradeId,
+      deletedBy: (session.user as any).username || session.user.email,
+      role: (session.user as any).role,
+      geo,
     });
 
     return NextResponse.json({ success: true });

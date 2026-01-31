@@ -7,6 +7,7 @@ import {
 } from "@/lib/db/grade.service";
 import { logActivity } from "@/lib/db/activity.service";
 import prisma from "@/lib/db/prisma";
+import { getGeoLocation } from "@/lib/geolocation";
 
 import { requireAdminAuth } from "@/lib/auth";
 
@@ -63,6 +64,11 @@ export async function POST(request: NextRequest) {
 
     const result = await assignModulesToStudents(moduleIds, targetStudentIds);
 
+    // Get IP and Geo
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const ip = forwardedFor ? forwardedFor.split(",")[0] : "Unknown";
+    const geo = await getGeoLocation(ip);
+
     // Log activity
     await logActivity("MODULE_ASSIGNED", {
       moduleIds,
@@ -74,7 +80,7 @@ export async function POST(request: NextRequest) {
       adminName: session?.user?.name,
       userType: "admin",
       role: (session?.user as any)?.role,
-      geo: (session?.user as any)?.geo,
+      geo,
     });
 
     return NextResponse.json({

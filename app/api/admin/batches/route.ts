@@ -4,6 +4,10 @@ import {
   getBatchesWithStudentCounts,
 } from "@/lib/db/batch.service";
 import { getAllStudentsWithCGPA } from "@/lib/db/student.service";
+import { logActivity } from "@/lib/db/activity.service";
+import { getGeoLocation } from "@/lib/geolocation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 
 import { requireAdminAuth } from "@/lib/auth";
 
@@ -95,6 +99,22 @@ export async function POST(request: Request) {
     const batch = await findOrCreateBatch(batchName);
 
     console.log(`✅ Created/found batch: ${batch.name}`);
+
+    console.log(`✅ Created/found batch: ${batch.name}`);
+
+    // Get session for logging
+    const session = await getServerSession(authOptions);
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0] || "Unknown";
+    const geo = await getGeoLocation(ip);
+
+    await logActivity("BATCH_CREATED", {
+      batchId: batch.id,
+      batchName: batch.name,
+      createdBy: session?.user?.name || "Unknown",
+      role: (session?.user as any)?.role,
+      geo,
+    });
 
     return NextResponse.json({
       success: true,

@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { hash } from "bcryptjs";
 import prisma from "@/lib/db/prisma";
+import { logActivity } from "@/lib/db/activity.service";
+import { getGeoLocation } from "@/lib/geolocation";
 
 // GET all admins (Super Admin only)
 export async function GET() {
@@ -140,6 +142,25 @@ export async function POST(req: Request) {
         canParsePDF: true,
         canManageAdmins: true,
       },
+    });
+
+    // Log Activity
+    const userRole = (session?.user as any)?.role || "Unknown";
+    const creatorName = session?.user?.name || "Unknown";
+
+    // Get IP and Geo
+    const headers = req.headers;
+    const forwardedFor = headers.get("x-forwarded-for");
+    const ip = forwardedFor ? forwardedFor.split(",")[0] : "Unknown";
+    const geo = await getGeoLocation(ip);
+
+    await logActivity("ADMIN_CREATED", {
+      newAdminId: newAdmin.id,
+      newAdminUsername: newAdmin.username,
+      newAdminRole: newAdmin.role,
+      createdBy: creatorName,
+      creatorRole: userRole,
+      geo,
     });
 
     return NextResponse.json(newAdmin);

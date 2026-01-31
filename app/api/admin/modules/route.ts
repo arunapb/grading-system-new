@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { getModulesBySemester, getAllModules } from "@/lib/db/module.service";
 import prisma from "@/lib/db/prisma";
+import { logActivity } from "@/lib/db/activity.service";
+import { getGeoLocation } from "@/lib/geolocation";
 
 import { requireAdminAuth } from "@/lib/auth";
 
@@ -91,6 +93,23 @@ export async function POST(request: Request) {
           connect: { id: semesterId },
         },
       },
+    });
+
+    // Get IP and Geo
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const ip = forwardedFor ? forwardedFor.split(",")[0] : "Unknown";
+    const geo = await getGeoLocation(ip);
+
+    // Log Activity
+    await logActivity("MODULE_CREATED", {
+      moduleId: module.id,
+      moduleCode: module.code,
+      moduleName: module.name,
+      credits: module.credits,
+      semesterId,
+      createdBy: session?.user?.name || "Unknown",
+      role: (session?.user as any)?.role,
+      geo,
     });
 
     return NextResponse.json({

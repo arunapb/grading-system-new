@@ -6,6 +6,8 @@ import {
   getAllInvitations,
   deleteInvitation,
 } from "@/lib/db/invitation.service";
+import { logActivity } from "@/lib/db/activity.service";
+import { getGeoLocation } from "@/lib/geolocation";
 
 // GET - List all invitations (admin only)
 import { requireAdminAuth } from "@/lib/auth";
@@ -50,6 +52,26 @@ export async function POST(request: NextRequest) {
       expiresInMinutes,
       maxUses,
     );
+
+    // Get session for user details
+    const session = await getServerSession(authOptions);
+    const userRole = (session?.user as any)?.role || "Unknown";
+    const userName = session?.user?.name || "Unknown";
+
+    // Get IP and Geo
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const ip = forwardedFor ? forwardedFor.split(",")[0] : "Unknown";
+    const geo = await getGeoLocation(ip);
+
+    await logActivity("INVITATION_CREATED", {
+      studentId,
+      invitationCode: invitation.code,
+      expiresInMinutes,
+      maxUses,
+      createdBy: userName,
+      role: userRole,
+      geo,
+    });
 
     return NextResponse.json(invitation, { status: 201 });
   } catch (error) {
