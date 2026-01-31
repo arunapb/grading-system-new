@@ -121,8 +121,8 @@ export function GradeAnalytics({
       <h2 className="text-2xl font-bold">Grade Analytics</h2>
 
       {/* Grade Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Grade Distribution</CardTitle>
             <CardDescription>
@@ -151,7 +151,7 @@ export function GradeAnalytics({
         </Card>
 
         {/* SGPA Progression */}
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>SGPA Progression</CardTitle>
             <CardDescription>

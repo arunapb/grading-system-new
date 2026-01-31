@@ -4,6 +4,8 @@ import {
   incrementInvitationUse,
 } from "@/lib/db/invitation.service";
 import { getStudentDetails } from "@/lib/db/student.service";
+import { logActivity } from "@/lib/db/activity.service";
+import { getGeoLocation } from "@/lib/geolocation";
 
 /**
  * Parse user agent string to extract device, OS, and browser info
@@ -88,6 +90,25 @@ export async function POST(request: NextRequest) {
       device,
       os,
       browser,
+    });
+
+    // Fetch Geolocation
+    const geo = await getGeoLocation(ipAddress);
+
+    // Log Activity
+    await logActivity("STUDENT_LOGIN", {
+      studentId: student.id,
+      studentName: student.name || "Unknown Student",
+      indexNumber: student.indexNumber,
+      invitationCode: code.toUpperCase(),
+      geo: geo,
+      deviceInfo: {
+        device,
+        os,
+        browser,
+        ip: ipAddress,
+        userAgent,
+      },
     });
 
     // Get full student details with grades
