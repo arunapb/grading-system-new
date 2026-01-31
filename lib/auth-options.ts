@@ -161,6 +161,11 @@ export const authOptions: NextAuthOptions = {
         token.degree = (user as any).degree;
         token.indexNumber = (user as any).indexNumber;
         token.lectureCode = (user as any).lectureCode;
+
+        // Admin Session Expiration (1 hour)
+        if (token.type === "admin") {
+          token.adminSessionExpires = Date.now() + 60 * 60 * 1000;
+        }
         // Permissions
         token.canViewStructure = (user as any).canViewStructure;
         token.canEditStructure = (user as any).canEditStructure;
@@ -176,9 +181,23 @@ export const authOptions: NextAuthOptions = {
         token.canViewGrades = (user as any).canViewGrades;
         token.canEditGrades = (user as any).canEditGrades;
       }
+
+      // Check for Admin Session Expiration
+      if (
+        token.adminSessionExpires &&
+        Date.now() > (token.adminSessionExpires as number)
+      ) {
+        return { ...token, error: "AdminSessionExpired" };
+      }
+
       return token;
     },
     async session({ session, token }) {
+      // Force logout if session is expired
+      if (token.error === "AdminSessionExpired") {
+        return null as any;
+      }
+
       if (session.user) {
         (session.user as any).type = token.type;
         (session.user as any).role = token.role;
