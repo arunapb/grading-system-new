@@ -90,7 +90,9 @@ export default function InvitationsPage() {
   const [selectedBatch, setSelectedBatch] = useState("");
   const [selectedDegree, setSelectedDegree] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
-  const [expiresInMinutes, setExpiresInMinutes] = useState("60");
+  const [validDurationMinutes, setValidDurationMinutes] = useState("60");
+  const [absoluteExpirationMinutes, setAbsoluteExpirationMinutes] =
+    useState("43200"); // 30 days
   const [maxUses, setMaxUses] = useState("1");
 
   const { data: session } = useSession();
@@ -120,7 +122,8 @@ export default function InvitationsPage() {
   const createMutation = useMutation({
     mutationFn: async (data: {
       studentId: string;
-      expiresInMinutes: number;
+      validDurationMinutes: number;
+      absoluteExpirationMinutes: number;
       maxUses: number;
     }) => {
       const res = await fetch("/api/admin/invitations", {
@@ -171,7 +174,8 @@ export default function InvitationsPage() {
     setSelectedBatch("");
     setSelectedDegree("");
     setSelectedStudent("");
-    setExpiresInMinutes("60");
+    setValidDurationMinutes("60");
+    setAbsoluteExpirationMinutes("43200");
     setMaxUses("1");
   };
 
@@ -183,7 +187,8 @@ export default function InvitationsPage() {
 
     createMutation.mutate({
       studentId: selectedStudent,
-      expiresInMinutes: Number.parseInt(expiresInMinutes, 10),
+      validDurationMinutes: Number.parseInt(validDurationMinutes, 10),
+      absoluteExpirationMinutes: Number.parseInt(absoluteExpirationMinutes, 10),
       maxUses: Number.parseInt(maxUses, 10),
     });
   };
@@ -292,20 +297,41 @@ export default function InvitationsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Expires In</Label>
+                    <Label>Session Duration (after access)</Label>
                     <Select
-                      value={expiresInMinutes}
-                      onValueChange={setExpiresInMinutes}
+                      value={validDurationMinutes}
+                      onValueChange={setValidDurationMinutes}
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="5">5 minutes</SelectItem>
+                        <SelectItem value="10">10 minutes</SelectItem>
                         <SelectItem value="15">15 minutes</SelectItem>
                         <SelectItem value="30">30 minutes</SelectItem>
                         <SelectItem value="60">1 hour</SelectItem>
                         <SelectItem value="120">2 hours</SelectItem>
                         <SelectItem value="1440">24 hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Link Expiry (Deadline)</Label>
+                    <Select
+                      value={absoluteExpirationMinutes}
+                      onValueChange={setAbsoluteExpirationMinutes}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="720">12 hours</SelectItem>
+                        <SelectItem value="1440">24 hours</SelectItem>
+                        <SelectItem value="4320">3 days</SelectItem>
+                        <SelectItem value="10080">7 days</SelectItem>
+                        <SelectItem value="20160">14 days</SelectItem>
+                        <SelectItem value="43200">30 days</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

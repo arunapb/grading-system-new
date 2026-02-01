@@ -38,7 +38,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { studentId, expiresInMinutes = 60, maxUses = 1 } = body;
+    const {
+      studentId,
+      validDurationMinutes = 60,
+      absoluteExpirationMinutes = 43200,
+      maxUses = 1,
+    } = body;
 
     if (!studentId) {
       return NextResponse.json(
@@ -49,7 +54,8 @@ export async function POST(request: NextRequest) {
 
     const invitation = await createInvitation(
       studentId,
-      expiresInMinutes,
+      absoluteExpirationMinutes,
+      validDurationMinutes,
       maxUses,
     );
 
@@ -66,7 +72,8 @@ export async function POST(request: NextRequest) {
     await logActivity("INVITATION_CREATED", {
       studentId,
       invitationCode: invitation.code,
-      expiresInMinutes,
+      absoluteExpirationMinutes,
+      validDurationMinutes,
       maxUses,
       createdBy: userName,
       role: userRole,

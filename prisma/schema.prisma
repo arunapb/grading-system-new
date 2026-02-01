@@ -85,26 +85,26 @@ model Admin {
   name               String
   role               Role          @default(ADMIN)
   status             AccountStatus @default(PENDING)
-  resetCode          String?       // 6-digit OTP for password reset
-  resetCodeExpiresAt DateTime?     // When the reset code expires
+  resetCode          String? // 6-digit OTP for password reset
+  resetCodeExpiresAt DateTime? // When the reset code expires
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
   // Granular Permissions - View/Edit pairs
-  canViewStructure   Boolean       @default(true)  // View Batches, Degrees, Years, Semesters
-  canEditStructure   Boolean       @default(false) // Create/Edit/Delete structure items
-  canViewStudents    Boolean       @default(true)  // View student data
-  canEditStudents    Boolean       @default(false) // Create/Edit/Delete students
-  canViewModules     Boolean       @default(true)  // View modules
-  canEditModules     Boolean       @default(false) // Create/Edit/Delete modules
-  canViewInvitations Boolean       @default(false)  // View invitations
-  canEditInvitations Boolean       @default(false) // Create/Revoke invitations
-  canScrape          Boolean       @default(false) // Access Scraper
-  canParsePDF        Boolean       @default(false) // Access PDF Parser & Upload
-  canManageAdmins    Boolean       @default(false) // Create/Edit other Admins (except Super Admin)
-  canAssignModules   Boolean       @default(false) // Assign modules to students without grading
-  canViewGrades      Boolean       @default(true)  // View student grades
-  canEditGrades      Boolean       @default(false) // Add/Edit/Delete grades
+  canViewStructure   Boolean @default(true) // View Batches, Degrees, Years, Semesters
+  canEditStructure   Boolean @default(false) // Create/Edit/Delete structure items
+  canViewStudents    Boolean @default(true) // View student data
+  canEditStudents    Boolean @default(false) // Create/Edit/Delete students
+  canViewModules     Boolean @default(true) // View modules
+  canEditModules     Boolean @default(false) // Create/Edit/Delete modules
+  canViewInvitations Boolean @default(false) // View invitations
+  canEditInvitations Boolean @default(false) // Create/Revoke invitations
+  canScrape          Boolean @default(false) // Access Scraper
+  canParsePDF        Boolean @default(false) // Access PDF Parser & Upload
+  canManageAdmins    Boolean @default(false) // Create/Edit other Admins (except Super Admin)
+  canAssignModules   Boolean @default(false) // Assign modules to students without grading
+  canViewGrades      Boolean @default(true) // View student grades
+  canEditGrades      Boolean @default(false) // Add/Edit/Delete grades
 }
 
 model Student {
@@ -149,21 +149,22 @@ model ActivityLog {
 }
 
 model StudentInvitation {
-  id           String    @id @default(cuid())
-  code         String    @unique // 6-character alphanumeric code
-  student      Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  studentId    String
-  expiresAt    DateTime // When the invitation expires
-  maxUses      Int       @default(1) // Maximum number of times link can be used
-  useCount     Int       @default(0) // Current number of uses
-  accessedAt   DateTime? // When the student first accessed
+  id            String    @id @default(cuid())
+  code          String    @unique // 6-character alphanumeric code
+  student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId     String
+  expiresAt     DateTime // When the invitation expires (updated on first access)
+  validDuration Int       @default(60) // Duration in minutes to expire after first access
+  maxUses       Int       @default(1) // Maximum number of times link can be used
+  useCount      Int       @default(0) // Current number of uses
+  accessedAt    DateTime? // When the student first accessed
   // Access tracking
-  lastIpAddress String?   // IP address of the accessor
-  lastUserAgent String?   // Full user agent string
-  lastDevice    String?   // Device type (Desktop, Mobile, Tablet)
-  lastOs        String?   // Operating system (Windows, macOS, Linux, iOS, Android)
-  lastBrowser   String?   // Browser name (Chrome, Firefox, Safari, etc.)
-  createdAt    DateTime  @default(now())
+  lastIpAddress String? // IP address of the accessor
+  lastUserAgent String? // Full user agent string
+  lastDevice    String? // Device type (Desktop, Mobile, Tablet)
+  lastOs        String? // Operating system (Windows, macOS, Linux, iOS, Android)
+  lastBrowser   String? // Browser name (Chrome, Firefox, Safari, etc.)
+  createdAt     DateTime  @default(now())
 
   @@index([code])
   @@index([expiresAt])

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -17,8 +17,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, GraduationCap } from "lucide-react";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isExpired = searchParams.get("expired") === "true";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -70,6 +72,14 @@ export default function LoginPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {isExpired && !error && (
+            <Alert className="mb-4 border-amber-200 bg-amber-50 text-amber-800">
+              <AlertDescription>
+                Your session has expired. Please sign in again.
+              </AlertDescription>
             </Alert>
           )}
 
@@ -162,5 +172,19 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-4">
+          Loading...
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }
