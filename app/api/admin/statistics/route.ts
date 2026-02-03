@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { getAllStudentsWithCGPA } from "@/lib/db/student.service";
 import { getAllBatches } from "@/lib/db/batch.service";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 
 interface GradeDistribution {
   [grade: string]: number;
@@ -30,12 +32,63 @@ export async function GET() {
   try {
     console.log("📊 Fetching admin statistics from database...");
 
+    const session = await getServerSession(authOptions);
+    let adminScope:
+      | { allowedBatches: string[]; allowedDegrees: string[] }
+      | undefined;
+    let accessibleBatchIds = new Set<string>();
+    let isRestricted = false;
+
+    if (
+      session?.user &&
+      ["ADMIN", "SUPER_ADMIN"].includes((session.user as any).role)
+    ) {
+      const username = (session.user as any).email;
+      if (username) {
+        const admin = await prisma.admin.findUnique({
+          where: { username },
+          select: {
+            allowedBatches: { select: { id: true } },
+            allowedDegrees: { select: { id: true, batchId: true } },
+          },
+        });
+
+        if (admin) {
+          const batchIds = admin.allowedBatches.map((b) => b.id);
+          const degreeIds = admin.allowedDegrees.map((d) => d.id);
+
+          if (batchIds.length > 0 || degreeIds.length > 0) {
+            isRestricted = true;
+            batchIds.forEach((id) => accessibleBatchIds.add(id));
+            admin.allowedDegrees.forEach((d) =>
+              accessibleBatchIds.add(d.batchId),
+            );
+          }
+
+          adminScope = {
+            allowedBatches: batchIds,
+            allowedDegrees: degreeIds,
+          };
+        }
+      }
+    }
+
     // Get all batches
-    const batches = await getAllBatches();
+    let batches = await getAllBatches();
+
+    // Filter batches if restricted
+    if (isRestricted) {
+      batches = batches.filter((b) => accessibleBatchIds.has(b.id));
+    }
+
     const batchNames = batches.map((b: any) => b.name);
 
-    // Get global student count and average
-    const allStudents = await getAllStudentsWithCGPA();
+    // Get global student count and average (Scoped)
+    const allStudents = await getAllStudentsWithCGPA(
+      undefined,
+      undefined,
+      adminScope,
+    );
     const totalStudents = allStudents.length;
     const averageCGPA =
       totalStudents > 0

@@ -6,24 +6,22 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const batch = searchParams.get("batch");
 
-    if (!batch) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Batch parameter is required",
-        },
-        { status: 400 },
-      );
-    }
+    // If match is provided, filter by it. If not, return all (or maybe limit?).
+    // For admin selection, we want all.
+    const whereClause = batch ? { batch: { name: batch } } : {};
 
-    console.log(`🎓 Fetching available degrees for ${batch} from database...`);
+    console.log(
+      `🎓 Fetching available degrees ${batch ? `for ${batch}` : "(all)"} from database...`,
+    );
 
     const degrees = await prisma.degree.findMany({
-      where: {
-        batch: { name: batch },
-      },
-      orderBy: { name: "asc" },
+      where: whereClause,
+      orderBy: [
+        { batch: { name: "desc" } }, // Order by Batch first
+        { name: "asc" },
+      ],
       include: {
+        batch: true, // Need batch info if fetching all
         _count: {
           select: { students: true },
         },
@@ -54,7 +52,9 @@ export async function GET(req: NextRequest) {
       }, 0);
 
       return {
+        id: degree.id,
         name: degree.name,
+        batchName: degree.batch.name,
         students: degree._count.students,
         hasData: totalModules > 0,
       };

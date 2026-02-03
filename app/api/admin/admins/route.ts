@@ -40,6 +40,13 @@ export async function GET() {
         canAssignModules: true,
         canViewGrades: true,
         canEditGrades: true,
+        // Granular Scopes
+        allowedBatches: {
+          select: { id: true, name: true },
+        },
+        allowedDegrees: {
+          select: { id: true, name: true, batch: { select: { name: true } } },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -122,6 +129,13 @@ export async function POST(req: Request) {
         canAssignModules: canAssignModules ?? false,
         canViewGrades: canViewGrades ?? true,
         canEditGrades: canEditGrades ?? false,
+        // Granular Scopes
+        allowedBatches: body.allowedBatches?.length
+          ? { connect: body.allowedBatches.map((id: string) => ({ id })) }
+          : undefined,
+        allowedDegrees: body.allowedDegrees?.length
+          ? { connect: body.allowedDegrees.map((id: string) => ({ id })) }
+          : undefined,
       },
       select: {
         id: true,
@@ -141,6 +155,8 @@ export async function POST(req: Request) {
         canScrape: true,
         canParsePDF: true,
         canManageAdmins: true,
+        allowedBatches: { select: { id: true, name: true } },
+        allowedDegrees: { select: { id: true, name: true } },
       },
     });
 
@@ -301,7 +317,20 @@ export async function PATCH(req: Request) {
     if (canAssignModules !== undefined)
       updateData.canAssignModules = canAssignModules;
     if (canViewGrades !== undefined) updateData.canViewGrades = canViewGrades;
+    if (canViewGrades !== undefined) updateData.canViewGrades = canViewGrades;
     if (canEditGrades !== undefined) updateData.canEditGrades = canEditGrades;
+
+    // Granular Scopes (Set replaces all existing connections)
+    if (body.allowedBatches !== undefined) {
+      updateData.allowedBatches = {
+        set: body.allowedBatches.map((id: string) => ({ id })),
+      };
+    }
+    if (body.allowedDegrees !== undefined) {
+      updateData.allowedDegrees = {
+        set: body.allowedDegrees.map((id: string) => ({ id })),
+      };
+    }
 
     const updatedAdmin = await prisma.admin.update({
       where: { id },
@@ -324,6 +353,8 @@ export async function PATCH(req: Request) {
         canScrape: true,
         canParsePDF: true,
         canManageAdmins: true,
+        allowedBatches: { select: { id: true, name: true } },
+        allowedDegrees: { select: { id: true, name: true } },
       },
     });
 

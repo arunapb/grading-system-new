@@ -8,6 +8,7 @@ import { logActivity } from "@/lib/db/activity.service";
 import { getGeoLocation } from "@/lib/geolocation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
+import prisma from "@/lib/db/prisma";
 
 import { requireAdminAuth } from "@/lib/auth";
 
@@ -19,12 +20,61 @@ export async function GET() {
   try {
     console.log("📦 Fetching available batches from database...");
 
-    const batches = await getBatchesWithStudentCounts();
+    const session = await getServerSession(authOptions);
+    let adminScope:
+      | { allowedBatches: string[]; allowedDegrees: string[] }
+      | undefined;
+    let accessibleBatchIds = new Set<string>();
+    let isRestricted = false;
+
+    if (
+      session?.user &&
+      ["ADMIN", "SUPER_ADMIN"].includes((session.user as any).role)
+    ) {
+      const username = (session.user as any).email;
+      if (username) {
+        const admin = await prisma.admin.findUnique({
+          where: { username },
+          select: {
+            allowedBatches: { select: { id: true } },
+            allowedDegrees: { select: { id: true, batchId: true } },
+          },
+        });
+
+        if (admin) {
+          const batchIds = admin.allowedBatches.map((b) => b.id);
+          const degreeIds = admin.allowedDegrees.map((d) => d.id);
+
+          if (batchIds.length > 0 || degreeIds.length > 0) {
+            isRestricted = true;
+            // Batches explicitly allowed
+            batchIds.forEach((id) => accessibleBatchIds.add(id));
+            // Batches allowed via degrees
+            admin.allowedDegrees.forEach((d) =>
+              accessibleBatchIds.add(d.batchId),
+            );
+          }
+
+          adminScope = {
+            allowedBatches: batchIds,
+            allowedDegrees: degreeIds,
+          };
+        }
+      }
+    }
+
+    let batches = await getBatchesWithStudentCounts();
+
+    // Filter batches if restricted
+    if (isRestricted) {
+      batches = batches.filter((b) => accessibleBatchIds.has(b.id));
+    }
 
     // Get top students for each batch
     const batchesWithTopStudents = await Promise.all(
       batches.map(
         async (batch: {
+          id: string;
           name: string;
           degreeCount: number;
           studentCount: number;
@@ -37,7 +87,14 @@ export async function GET() {
           }> = [];
 
           try {
-            const students = await getAllStudentsWithCGPA(batch.name);
+            const students = await getAllStudentsWithCGPA(
+              batch.name,
+              undefined,
+              adminScope, // Pass scope to filter students potentially?
+              // Note: If we already filtered the batch list, we are iterating over allowed batches.
+              // But 'allowedDegrees' might further restrict within that batch.
+              // So passing adminScope is critical.
+            );
 
             if (students.length > 0) {
               topGPA = students[0].cgpa;
@@ -52,6 +109,7 @@ export async function GET() {
           }
 
           return {
+            id: batch.id,
             name: batch.name,
             degrees: batch.degreeCount,
             studentCount: batch.studentCount,

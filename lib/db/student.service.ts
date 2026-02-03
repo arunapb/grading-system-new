@@ -98,9 +98,14 @@ export async function getStudentByIndex(
 export async function getAllStudentsWithCGPA(
   batchName?: string,
   degreeName?: string,
+  adminScope?: {
+    allowedBatches: string[];
+    allowedDegrees: string[];
+  },
 ) {
   const whereClause: any = {};
 
+  // Base filters from arguments
   if (batchName && degreeName) {
     whereClause.degree = {
       name: degreeName,
@@ -110,6 +115,45 @@ export async function getAllStudentsWithCGPA(
     whereClause.degree = {
       batch: { name: batchName },
     };
+  }
+
+  // Admin Scoping Logic
+  // If adminScope is provided and NOT empty, restrict access.
+  // If allowedBatches/Degrees are empty arrays, it means NO access via that scope type.
+  // But usually "empty" means "Global Admin" in the caller, so the caller should only pass adminScope if they want to restrict.
+  // However, the logic here should be:
+  // IF (adminScope has entries) OR (adminScope is provided but empty meaning restricted to nothing?)
+  // Let's assume the caller passes `undefined` for Super Admin (Full Access).
+  // And passes an object (even if empty arrays) for Restricted Admin.
+
+  if (adminScope) {
+    const { allowedBatches, allowedDegrees } = adminScope;
+    const hasBatches = allowedBatches && allowedBatches.length > 0;
+    const hasDegrees = allowedDegrees && allowedDegrees.length > 0;
+
+    // If both are empty, and scope is provided, implied access is NONE (or strictly nothing).
+    // Unless we treat empty as "no restriction"? No, based on our design, "empty relations" in DB = Full Access.
+    // But here we are passing the *resolved* permissions.
+    // Let's adopt: If adminScope is passed, we MUST filter.
+
+    if (hasBatches || hasDegrees) {
+      // Construct OR condition: Student in allowed batch OR Student in allowed degree
+      const scopeFilter: any = { OR: [] };
+
+      if (hasBatches) {
+        scopeFilter.OR.push({ degree: { batchId: { in: allowedBatches } } });
+      }
+      if (hasDegrees) {
+        scopeFilter.OR.push({ degreeId: { in: allowedDegrees } });
+      }
+
+      // Combine with existing whereClause
+      whereClause.AND = [scopeFilter];
+    } else {
+      // adminScope provided but empty arrays -> Block Access (return nothing)
+      // This handles the case where a "Restricted Admin" has specifically been given NO batches/degrees yet.
+      whereClause.AND = [{ id: "__BLOCK_ALL__" }]; // Hack to return empty
+    }
   }
 
   const students = await prisma.student.findMany({
@@ -269,8 +313,21 @@ export async function getStudentDetails(
     totalCredits > 0 ? parseFloat((totalPoints / totalCredits).toFixed(2)) : 0;
 
   // Get rank
-  const allStudents = await getAllStudentsWithCGPA(batchName, degreeName);
-  const rank = allStudents.findIndex((s) => s.indexNumber === indexNumber) + 1;
+  // Use the student's actual batch and degree for ranking, not the optional params which might be missing
+  const actualBatchName = student.degree.batch.name;
+  const actualDegreeName = student.degree.name;
+
+  const allStudents = await getAllStudentsWithCGPA(
+    actualBatchName,
+    actualDegreeName,
+  );
+
+  // Find rank (case insensitive index check)
+  const rank =
+    allStudents.findIndex(
+      (s) =>
+        s.indexNumber.toLowerCase().trim() === indexNumber.toLowerCase().trim(),
+    ) + 1;
 
   // Construct photo URL if available
   let photoUrl = student.photoUrl;
