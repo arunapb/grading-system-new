@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkPermission } from "@/lib/permissions";
+import {
+  checkPermission,
+  getAdminScope,
+  isStudentInScope,
+} from "@/lib/permissions";
 import prisma from "@/lib/db/prisma";
 import { gradeToPoints } from "@/lib/gpa-calculator";
 import { logActivity } from "@/lib/db/activity.service";
@@ -50,6 +54,21 @@ export async function GET(
       return NextResponse.json(
         { success: false, error: "Student not found" },
         { status: 404 },
+      );
+    }
+
+    // Check admin scope - verify student is accessible
+    const adminScope = await getAdminScope(permResult.session);
+    const hasAccess = await isStudentInScope(
+      student.degreeId,
+      student.degree.batch.id,
+      adminScope,
+    );
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        { success: false, error: "Access denied - student not in your scope" },
+        { status: 403 },
       );
     }
 
@@ -215,11 +234,31 @@ export async function PATCH(
       where: { id },
       include: {
         grades: true,
+        degree: {
+          include: {
+            batch: true,
+          },
+        },
       },
     });
 
     if (!student) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    }
+
+    // Check admin scope - verify student is accessible
+    const adminScope = await getAdminScope(session);
+    const hasAccess = await isStudentInScope(
+      student.degreeId,
+      student.degree.batch.id,
+      adminScope,
+    );
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Access denied - student not in your scope" },
+        { status: 403 },
+      );
     }
 
     if (type === "PROFILE") {

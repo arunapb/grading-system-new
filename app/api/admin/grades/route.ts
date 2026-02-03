@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth-options";
 import { NextRequest, NextResponse } from "next/server";
 import { logActivity } from "@/lib/db/activity.service";
 import { getGeoLocation } from "@/lib/geolocation";
+import { getAdminScope, isStudentInScope } from "@/lib/permissions";
 
 // POST - Add or update a grade for a student (admin only)
 import { requireAdminAuth, getAdminSession } from "@/lib/auth";
@@ -55,6 +56,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: `Invalid grade. Valid grades: ${validGrades.join(", ")}` },
         { status: 400 },
+      );
+    }
+
+    // Verify student is within admin's scope
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      include: {
+        degree: {
+          include: { batch: true },
+        },
+      },
+    });
+
+    if (!student) {
+      return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    }
+
+    const adminScope = await getAdminScope(session);
+    const hasAccess = await isStudentInScope(
+      student.degreeId,
+      student.degree.batch.id,
+      adminScope,
+    );
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Access denied - student not in your scope" },
+        { status: 403 },
       );
     }
 
@@ -126,6 +155,35 @@ export async function GET(request: NextRequest) {
     const moduleId = searchParams.get("moduleId");
 
     if (studentId) {
+      // Verify student is within admin's scope
+      const student = await prisma.student.findUnique({
+        where: { id: studentId },
+        include: {
+          degree: { include: { batch: true } },
+        },
+      });
+
+      if (!student) {
+        return NextResponse.json(
+          { error: "Student not found" },
+          { status: 404 },
+        );
+      }
+
+      const adminScope = await getAdminScope(session);
+      const hasAccess = await isStudentInScope(
+        student.degreeId,
+        student.degree.batch.id,
+        adminScope,
+      );
+
+      if (!hasAccess) {
+        return NextResponse.json(
+          { error: "Access denied - student not in your scope" },
+          { status: 403 },
+        );
+      }
+
       const grades = await prisma.studentGrade.findMany({
         where: { studentId },
         include: {
@@ -193,6 +251,37 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(
         { error: "Grade ID is required" },
         { status: 400 },
+      );
+    }
+
+    // Fetch grade with student info for scope check
+    const gradeRecord = await prisma.studentGrade.findUnique({
+      where: { id: gradeId },
+      include: {
+        student: {
+          include: {
+            degree: { include: { batch: true } },
+          },
+        },
+      },
+    });
+
+    if (!gradeRecord) {
+      return NextResponse.json({ error: "Grade not found" }, { status: 404 });
+    }
+
+    // Verify student is within admin's scope
+    const adminScope = await getAdminScope(session);
+    const hasAccess = await isStudentInScope(
+      gradeRecord.student.degreeId,
+      gradeRecord.student.degree.batch.id,
+      adminScope,
+    );
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Access denied - student not in your scope" },
+        { status: 403 },
       );
     }
 

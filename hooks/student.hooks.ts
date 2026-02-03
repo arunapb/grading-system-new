@@ -74,10 +74,27 @@ export function useStudents(batch?: string, degree?: string) {
   return useQuery({
     queryKey: ["students", batch, degree],
     queryFn: async () => {
-      let url =
-        batch && degree
-          ? `/api/${encodeURIComponent(batch)}/${encodeURIComponent(degree)}/students`
-          : "/api/admin/students";
+      // If both batch and degree specified, use the public route
+      if (batch && degree) {
+        const url = `/api/${encodeURIComponent(batch)}/${encodeURIComponent(degree)}/students`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error("Failed to fetch students");
+        }
+        const data: StudentsResponse = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || "Failed to fetch students");
+        }
+        return data.students;
+      }
+
+      // Use admin students API with optional filters
+      let url = "/api/admin/students";
+      const params = new URLSearchParams();
+      if (batch) params.append("batch", batch);
+      if (degree) params.append("degree", degree);
+      const queryString = params.toString();
+      if (queryString) url += `?${queryString}`;
 
       const response = await fetch(url);
       if (!response.ok) {

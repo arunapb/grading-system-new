@@ -35,6 +35,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useBatches } from "@/hooks/batch.hooks";
+import { useDegrees } from "@/hooks/degree.hooks";
 import { useStudents } from "@/hooks/student.hooks";
 
 import { useRouter } from "next/navigation";
@@ -43,16 +44,24 @@ import { formatGPA } from "@/lib/gpa-calculator";
 export default function StudentsPage() {
   const router = useRouter();
   const [selectedBatch, setSelectedBatch] = useState<string>("all");
+  const [selectedDegree, setSelectedDegree] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"cgpa" | "name" | "credits">("cgpa");
 
   // Use hooks
   const { data: batches = [] } = useBatches();
+  const { data: degrees = [] } = useDegrees(
+    selectedBatch === "all" ? undefined : selectedBatch,
+  );
 
-  // Fetch students based on selected batch
-  // If "all" is selected, pass undefined to fetch all
+  // Fetch students based on selected batch and degree
   const batchArg = selectedBatch === "all" ? undefined : selectedBatch;
-  const { data: students = [], isLoading, refetch } = useStudents(batchArg);
+  const degreeArg = selectedDegree === "all" ? undefined : selectedDegree;
+  const {
+    data: students = [],
+    isLoading,
+    refetch,
+  } = useStudents(batchArg, degreeArg);
 
   // Filter and sort
   const filterAndSortStudents = () => {
@@ -203,11 +212,17 @@ export default function StudentsPage() {
           <CardDescription>Filter and search students</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Batch Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Batch</label>
-              <Select value={selectedBatch} onValueChange={setSelectedBatch}>
+              <Select
+                value={selectedBatch}
+                onValueChange={(v) => {
+                  setSelectedBatch(v);
+                  setSelectedDegree("all"); // Reset degree when batch changes
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select batch" />
                 </SelectTrigger>
@@ -216,6 +231,24 @@ export default function StudentsPage() {
                   {batches.map((batch) => (
                     <SelectItem key={batch.name} value={batch.name}>
                       {batch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Degree Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Degree</label>
+              <Select value={selectedDegree} onValueChange={setSelectedDegree}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select degree" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Degrees</SelectItem>
+                  {degrees.map((degree) => (
+                    <SelectItem key={degree.id} value={degree.name}>
+                      {degree.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

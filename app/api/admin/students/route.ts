@@ -15,9 +15,34 @@ export async function GET(request: NextRequest) {
     const batch = searchParams.get("batch");
     const degree = searchParams.get("degree");
 
+    // Fetch admin's scope restrictions
+    const user = permResult.session.user as any;
+    let adminScope:
+      | { allowedBatches: string[]; allowedDegrees: string[] }
+      | undefined;
+
+    // Only apply scope for non-super admins
+    if (user.role !== "SUPER_ADMIN") {
+      const admin = await prisma.admin.findUnique({
+        where: { username: user.email },
+        select: {
+          allowedBatches: { select: { id: true } },
+          allowedDegrees: { select: { id: true } },
+        },
+      });
+
+      if (admin) {
+        adminScope = {
+          allowedBatches: admin.allowedBatches.map((b) => b.id),
+          allowedDegrees: admin.allowedDegrees.map((d) => d.id),
+        };
+      }
+    }
+
     // Build where clause
     const where: any = {};
 
+    // Apply batch/degree filter from query params
     if (batch && degree) {
       where.degree = {
         name: degree,
@@ -25,6 +50,41 @@ export async function GET(request: NextRequest) {
           name: batch,
         },
       };
+    } else if (batch) {
+      where.degree = {
+        batch: {
+          name: batch,
+        },
+      };
+    } else if (degree) {
+      where.degree = {
+        name: degree,
+      };
+    }
+
+    // Apply admin scope restrictions
+    if (adminScope) {
+      const { allowedBatches, allowedDegrees } = adminScope;
+      const hasBatches = allowedBatches && allowedBatches.length > 0;
+      const hasDegrees = allowedDegrees && allowedDegrees.length > 0;
+
+      if (hasBatches || hasDegrees) {
+        // Construct OR condition: Student in allowed batch OR Student in allowed degree
+        const scopeConditions: any[] = [];
+
+        if (hasBatches) {
+          scopeConditions.push({ degree: { batchId: { in: allowedBatches } } });
+        }
+        if (hasDegrees) {
+          scopeConditions.push({ degreeId: { in: allowedDegrees } });
+        }
+
+        // Combine with existing where clause using AND
+        where.AND = [{ OR: scopeConditions }];
+      } else {
+        // Admin has scope defined but no allowed batches/degrees -> return nothing
+        where.AND = [{ id: "__BLOCK_ALL__" }];
+      }
     }
 
     const students = await prisma.student.findMany({
