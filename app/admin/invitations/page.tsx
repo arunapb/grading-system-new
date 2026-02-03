@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { useRequireViewInvitationsPermission } from "@/hooks/useRequirePermission";
+import { AccessDenied } from "@/components/AccessDenied";
 import {
   Card,
   CardContent,
@@ -48,6 +50,7 @@ import {
   Users,
   Monitor,
   Globe,
+  Loader2,
 } from "lucide-react";
 import { useStudentsWithCGPA } from "@/hooks/student.hooks";
 import { usePublicBatches } from "@/hooks/batch.hooks";
@@ -84,6 +87,10 @@ interface Invitation {
 }
 
 export default function InvitationsPage() {
+  // Permission check - redirects if unauthorized
+  const { isLoading: isCheckingAuth, hasPermission } =
+    useRequireViewInvitationsPermission();
+
   // Using sonner toast
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -212,6 +219,22 @@ export default function InvitationsPage() {
     }
     return <Badge variant="default">Active</Badge>;
   };
+
+  // Show loading while checking permissions
+  if (isCheckingAuth) {
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show Access Denied if no permission
+  if (!hasPermission) {
+    return <AccessDenied />;
+  }
 
   return (
     <div className="space-y-6">

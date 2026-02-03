@@ -46,11 +46,16 @@ import {
   Database,
   Search,
   Image as ImageIcon,
+  Upload,
+  FileUp,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { useScrapedBatches } from "@/hooks/admin.hooks";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRequireScrapePermission } from "@/hooks/useRequirePermission";
+import { AccessDenied } from "@/components/AccessDenied";
 
 interface ProgressState {
   step: string;
@@ -66,6 +71,10 @@ interface ProgressState {
 }
 
 export default function ScraperPage() {
+  // Permission check - redirects if unauthorized
+  const { isLoading: isCheckingAuth, hasPermission } =
+    useRequireScrapePermission();
+
   const [degree, setDegree] = useState("");
   const [batchNumber, setBatchNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -78,6 +87,20 @@ export default function ScraperPage() {
     photosUploaded?: number;
   } | null>(null);
   const [showWarning, setShowWarning] = useState(false);
+
+  // PDF Upload states
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfDegree, setPdfDegree] = useState("");
+  const [pdfBatchNumber, setPdfBatchNumber] = useState("");
+  const [pdfParsedStudents, setPdfParsedStudents] = useState<any[]>([]);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isPdfSaving, setIsPdfSaving] = useState(false);
+  const [pdfResult, setPdfResult] = useState<{
+    count: number;
+    students: any[];
+    skippedCount?: number;
+  } | null>(null);
+  const [showPdfConfirm, setShowPdfConfirm] = useState(false);
 
   const queryClient = useQueryClient();
   const { data: scrapedBatches = [], isLoading: isLoadingBatches } =
@@ -202,6 +225,93 @@ export default function ScraperPage() {
     return "bg-blue-100 text-blue-800 border-blue-200";
   };
 
+  // PDF Upload handler
+  const handlePDFUpload = async (action: "preview" | "save") => {
+    if (!pdfFile) {
+      toast.error("Please select a PDF file");
+      return;
+    }
+
+    if (action === "save" && (!pdfDegree || !pdfBatchNumber)) {
+      toast.error("Please select batch and degree");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", pdfFile);
+    formData.append("action", action);
+    if (pdfDegree) formData.append("degree", pdfDegree);
+    if (pdfBatchNumber) formData.append("batch", pdfBatchNumber);
+
+    try {
+      if (action === "preview") {
+        setIsPdfLoading(true);
+      } else {
+        setIsPdfSaving(true);
+      }
+
+      const response = await fetch("/api/admin/upload-students-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to process PDF");
+      }
+
+      if (action === "preview") {
+        setPdfParsedStudents(data.students);
+        toast.success(`Found ${data.count} students in PDF`);
+      } else {
+        setPdfResult({
+          count: data.count,
+          students: data.students,
+          skippedCount: data.skippedCount || 0,
+        });
+        setPdfParsedStudents([]);
+        setPdfFile(null);
+        setShowPdfConfirm(false);
+        toast.success(data.message);
+        // Invalidate cached data
+        queryClient.invalidateQueries({
+          queryKey: ["admin", "scraped-batches"],
+        });
+      }
+    } catch (error) {
+      console.error("PDF upload error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to process PDF",
+      );
+    } finally {
+      setIsPdfLoading(false);
+      setIsPdfSaving(false);
+    }
+  };
+
+  const clearPDFSelection = () => {
+    setPdfFile(null);
+    setPdfParsedStudents([]);
+    setPdfResult(null);
+  };
+
+  // Show loading while checking permissions
+  if (isCheckingAuth) {
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show Access Denied if no permission
+  if (!hasPermission) {
+    return <AccessDenied />;
+  }
+
   return (
     <div className="container mx-auto px-6 py-8">
       {/* Header */}
@@ -323,6 +433,181 @@ export default function ScraperPage() {
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               <strong>Saves to:</strong> Database + Cloudinary
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* PDF Upload Section */}
+      <Card className="mb-6 border-2 border-dashed border-primary/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileUp className="h-5 w-5" />
+            Upload Student List PDF
+          </CardTitle>
+          <CardDescription>
+            Alternative method: Upload an Academic Advisor List PDF to add
+            students
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="pdfDegree">Degree</Label>
+              <Select
+                value={pdfDegree}
+                onValueChange={setPdfDegree}
+                disabled={isPdfLoading || isPdfSaving}
+              >
+                <SelectTrigger id="pdfDegree">
+                  <SelectValue placeholder="Select degree" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="it">IT</SelectItem>
+                  <SelectItem value="itm">ITM</SelectItem>
+                  <SelectItem value="ai">AI</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pdfBatchNumber">Batch Number</Label>
+              <Input
+                id="pdfBatchNumber"
+                placeholder="e.g., 21, 22"
+                value={pdfBatchNumber}
+                onChange={(e) => setPdfBatchNumber(e.target.value)}
+                disabled={isPdfLoading || isPdfSaving}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pdfFile">PDF File</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="pdfFile"
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setPdfFile(file);
+                      setPdfParsedStudents([]);
+                      setPdfResult(null);
+                    }
+                  }}
+                  disabled={isPdfLoading || isPdfSaving}
+                  className="flex-1"
+                />
+                {pdfFile && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={clearPDFSelection}
+                    disabled={isPdfLoading || isPdfSaving}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {pdfFile && (
+            <div className="mt-4 flex gap-2">
+              <Button
+                onClick={() => handlePDFUpload("preview")}
+                disabled={isPdfLoading || isPdfSaving}
+                variant="outline"
+                className="gap-2"
+              >
+                {isPdfLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Parsing...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4" />
+                    Preview Students
+                  </>
+                )}
+              </Button>
+
+              {pdfParsedStudents.length > 0 && (
+                <Button
+                  onClick={() => setShowPdfConfirm(true)}
+                  disabled={isPdfSaving || !pdfDegree || !pdfBatchNumber}
+                  className="gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Save {pdfParsedStudents.length} Students
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Preview Table - Shows ALL students */}
+          {pdfParsedStudents.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm font-medium mb-2">
+                Found {pdfParsedStudents.length} students:
+              </p>
+              <div className="rounded-lg border max-h-96 overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 sticky top-0">
+                      <TableHead className="w-16">#</TableHead>
+                      <TableHead>Reg. No</TableHead>
+                      <TableHead>Name</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pdfParsedStudents.map((student, idx) => (
+                      <TableRow key={student.indexNumber}>
+                        <TableCell className="text-muted-foreground">
+                          {idx + 1}
+                        </TableCell>
+                        <TableCell className="font-mono font-medium">
+                          {student.indexNumber}
+                        </TableCell>
+                        <TableCell>{student.name || "—"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+
+          {/* PDF Upload Result */}
+          {pdfResult && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="font-medium text-green-800">
+                    Successfully added {pdfResult.count} students to{" "}
+                    {pdfDegree.toUpperCase()} Batch {pdfBatchNumber}
+                  </p>
+                  {pdfResult.skippedCount && pdfResult.skippedCount > 0 && (
+                    <p className="text-sm text-green-700">
+                      {pdfResult.skippedCount} students were skipped (already
+                      exist)
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 p-4 bg-muted rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              <strong>Accepted Format:</strong> Academic Advisor List PDF with
+              REG. NO and NAME columns
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              <strong>Saves to:</strong> Database only (no photos)
             </p>
           </div>
         </CardContent>
@@ -517,6 +802,54 @@ export default function ScraperPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleScrape}>
               Yes, Scrape Again
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* PDF Upload Confirmation Dialog */}
+      <AlertDialog open={showPdfConfirm} onOpenChange={setShowPdfConfirm}>
+        <AlertDialogContent className="max-w-lg">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-primary" />
+              <AlertDialogTitle>Confirm Add Students</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription asChild>
+              <div>
+                <p className="mb-4">
+                  You are about to add{" "}
+                  <strong>{pdfParsedStudents.length} students</strong> to:
+                </p>
+                <div className="p-3 bg-muted rounded-lg mb-4">
+                  <p>
+                    <strong>Batch:</strong> Batch {pdfBatchNumber}
+                  </p>
+                  <p>
+                    <strong>Degree:</strong> {pdfDegree.toUpperCase()}
+                  </p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Students with registration numbers that already exist in the
+                  database will be skipped automatically.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPdfSaving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handlePDFUpload("save")}
+              disabled={isPdfSaving}
+            >
+              {isPdfSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <>Yes, Add Students</>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

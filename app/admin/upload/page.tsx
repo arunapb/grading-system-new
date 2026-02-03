@@ -16,6 +16,9 @@ import { Upload, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useUploadPDFs } from "@/hooks/admin.hooks";
+import { useRequireParsePDFPermission } from "@/hooks/useRequirePermission";
+import { AccessDenied } from "@/components/AccessDenied";
+import { Loader2 } from "lucide-react";
 
 interface Selection {
   batch: string;
@@ -33,6 +36,10 @@ interface UploadResult {
 }
 
 export default function UploadPage() {
+  // Permission check - redirects if unauthorized
+  const { isLoading: isCheckingAuth, hasPermission } =
+    useRequireParsePDFPermission();
+
   const [selection, setSelection] = useState<Selection | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [progress, setProgress] = useState(0);
@@ -87,6 +94,22 @@ export default function UploadPage() {
 
   const isReadyToUpload =
     selection !== null && files.length > 0 && !isUploading;
+
+  // Show loading while checking permissions
+  if (isCheckingAuth) {
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show Access Denied if no permission
+  if (!hasPermission) {
+    return <AccessDenied />;
+  }
 
   return (
     <div className="container mx-auto px-6 py-8">

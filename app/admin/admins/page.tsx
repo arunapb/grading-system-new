@@ -63,8 +63,14 @@ import { useBatches, BatchInfo } from "@/hooks/batch.hooks";
 import { useDegrees, DegreeInfo } from "@/hooks/degree.hooks";
 
 import { useSession } from "next-auth/react";
+import { useRequireManageAdminsPermission } from "@/hooks/useRequirePermission";
+import { AccessDenied } from "@/components/AccessDenied";
 
 export default function AdminsPage() {
+  // Permission check - redirects if unauthorized
+  const { isLoading: isCheckingAuth, hasPermission } =
+    useRequireManageAdminsPermission();
+
   const { data: session } = useSession();
   const isSuperAdmin = (session?.user as any)?.role === "SUPER_ADMIN";
 
@@ -295,6 +301,22 @@ export default function AdminsPage() {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  // Show loading while checking permissions
+  if (isCheckingAuth) {
+    return (
+      <div className="container mx-auto px-6 py-8 space-y-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show Access Denied if no permission
+  if (!hasPermission) {
+    return <AccessDenied />;
+  }
 
   return (
     <div className="container mx-auto px-6 py-8 space-y-8">

@@ -22,8 +22,15 @@ import {
 import { useBatches } from "@/hooks/batch.hooks";
 import { useStructure } from "@/hooks/structure.hooks";
 import { usePDFs } from "@/hooks/pdf.hooks";
+import { useRequireParsePDFPermission } from "@/hooks/useRequirePermission";
+import { AccessDenied } from "@/components/AccessDenied";
+import { Loader2 } from "lucide-react";
 
 export default function AdminParserPage() {
+  // Permission check - redirects if unauthorized
+  const { isLoading: isCheckingAuth, hasPermission } =
+    useRequireParsePDFPermission();
+
   // 1. Fetch batches
   const { data: batches = [] } = useBatches();
 
@@ -49,6 +56,22 @@ export default function AdminParserPage() {
     setSelectedBatch(value);
     setSelectedDegree("");
   };
+
+  // Show loading while checking permissions
+  if (isCheckingAuth) {
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show Access Denied if no permission
+  if (!hasPermission) {
+    return <AccessDenied />;
+  }
 
   return (
     <div className="container mx-auto px-6 py-8">
