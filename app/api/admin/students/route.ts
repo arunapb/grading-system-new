@@ -69,7 +69,10 @@ export async function GET(request: NextRequest) {
       const hasDegrees = allowedDegrees && allowedDegrees.length > 0;
 
       if (hasBatches || hasDegrees) {
-        // Construct OR condition: Student in allowed batch OR Student in allowed degree
+        // Use AND logic: Student must be in an allowed batch AND an allowed degree
+        // If admin only has batch restrictions, apply batch filter
+        // If admin only has degree restrictions, apply degree filter
+        // If admin has both, apply both filters (AND)
         const scopeConditions: any[] = [];
 
         if (hasBatches) {
@@ -79,12 +82,17 @@ export async function GET(request: NextRequest) {
           scopeConditions.push({ degreeId: { in: allowedDegrees } });
         }
 
-        // Combine with existing where clause using AND
-        where.AND = [{ OR: scopeConditions }];
+        // Combine with existing where clause using AND (all conditions must match)
+        if (!where.AND) {
+          where.AND = [];
+        }
+        where.AND.push(...scopeConditions);
       } else {
         // Admin has scope defined but no allowed batches/degrees -> return nothing
+
         where.AND = [{ id: "__BLOCK_ALL__" }];
       }
+    } else {
     }
 
     const students = await prisma.student.findMany({

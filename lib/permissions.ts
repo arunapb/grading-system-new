@@ -164,6 +164,7 @@ export async function getAdminScope(session: any): Promise<
 /**
  * Check if a student is within the admin's scope.
  * Returns true if accessible, false otherwise.
+ * Uses AND logic: student must match BOTH batch AND degree restrictions if both are defined.
  */
 export async function isStudentInScope(
   studentDegreeId: string,
@@ -177,16 +178,20 @@ export async function isStudentInScope(
 
   const { allowedBatches, allowedDegrees } = adminScope;
 
-  // Check if student's degree is in allowed degrees
-  if (allowedDegrees.length > 0 && allowedDegrees.includes(studentDegreeId)) {
-    return true;
-  }
+  const hasBatchRestrictions = allowedBatches.length > 0;
+  const hasDegreeRestrictions = allowedDegrees.length > 0;
 
-  // Check if student's batch is in allowed batches
-  if (allowedBatches.length > 0 && allowedBatches.includes(studentBatchId)) {
-    return true;
-  }
+  // If no restrictions at all, allow access
+  if (!hasBatchRestrictions && !hasDegreeRestrictions) return true;
 
-  // If we have scope restrictions and student matches none, deny access
-  return false;
+  // Check batch restriction (if any)
+  const batchAllowed =
+    !hasBatchRestrictions || allowedBatches.includes(studentBatchId);
+
+  // Check degree restriction (if any)
+  const degreeAllowed =
+    !hasDegreeRestrictions || allowedDegrees.includes(studentDegreeId);
+
+  // Must satisfy ALL restrictions (AND logic)
+  return batchAllowed && degreeAllowed;
 }
