@@ -519,8 +519,6 @@ export default function AdminsPage() {
                 />
               </div>
 
-
-
               <div className="space-y-4 pt-2">
                 <Label>Scope of Access (Optional)</Label>
                 <div className="border rounded-md p-2">
@@ -531,32 +529,69 @@ export default function AdminsPage() {
                       <AccordionContent>
                         <div className="p-2 space-y-2">
                           <p className="text-sm text-muted-foreground mb-2">
-                            Select batches this admin is allowed to access. Leave empty for all batches.
+                            Select batches this admin is allowed to access.
+                            Leave empty for all batches.
                           </p>
                           {batches && batches.length > 0 ? (
-                            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                              {batches.map((batch) => (
-                                <div key={batch.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`create-batch-${batch.id}`}
-                                    checked={createData.allowedBatches.includes(batch.id)}
-                                    onCheckedChange={(checked) => {
-                                      setCreateData(prev => ({
+                            <div className="space-y-2">
+                              <div className="flex items-center space-x-2 pb-2 border-b">
+                                <Checkbox
+                                  id="create-batch-all"
+                                  checked={
+                                    createData.allowedBatches.length === 0
+                                  }
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setCreateData((prev) => ({
                                         ...prev,
-                                        allowedBatches: checked
-                                          ? [...prev.allowedBatches, batch.id]
-                                          : prev.allowedBatches.filter(id => id !== batch.id)
+                                        allowedBatches: [],
                                       }));
-                                    }}
-                                  />
-                                  <Label htmlFor={`create-batch-${batch.id}`} className="text-sm font-normal cursor-pointer">
-                                    {batch.name}
-                                  </Label>
-                                </div>
-                              ))}
+                                    }
+                                  }}
+                                />
+                                <Label
+                                  htmlFor="create-batch-all"
+                                  className="text-sm font-medium cursor-pointer"
+                                >
+                                  All Batches
+                                </Label>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pt-1">
+                                {batches.map((batch) => (
+                                  <div
+                                    key={batch.id}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Checkbox
+                                      id={`create-batch-${batch.id}`}
+                                      checked={createData.allowedBatches.includes(
+                                        batch.id,
+                                      )}
+                                      onCheckedChange={(checked) => {
+                                        setCreateData((prev) => ({
+                                          ...prev,
+                                          allowedBatches: checked
+                                            ? [...prev.allowedBatches, batch.id]
+                                            : prev.allowedBatches.filter(
+                                                (id) => id !== batch.id,
+                                              ),
+                                        }));
+                                      }}
+                                    />
+                                    <Label
+                                      htmlFor={`create-batch-${batch.id}`}
+                                      className="text-sm font-normal cursor-pointer"
+                                    >
+                                      {batch.name}
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           ) : (
-                             <p className="text-sm text-muted-foreground italic">No batches found</p>
+                            <p className="text-sm text-muted-foreground italic">
+                              No batches found
+                            </p>
                           )}
                         </div>
                       </AccordionContent>
@@ -567,33 +602,76 @@ export default function AdminsPage() {
                       <AccordionTrigger>Restricted Degrees</AccordionTrigger>
                       <AccordionContent>
                         <div className="p-2 space-y-2">
-                           <p className="text-sm text-muted-foreground mb-2">
-                            Select degrees this admin is allowed to access. Leave empty for all.
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Select degrees this admin is allowed to access.
+                            Leave empty for all.
                           </p>
                           {degrees && degrees.length > 0 ? (
-                            <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
-                              {degrees.map((degree) => (
-                                <div key={degree.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`create-degree-${degree.id}`}
-                                    checked={createData.allowedDegrees.includes(degree.id)}
-                                    onCheckedChange={(checked) => {
-                                      setCreateData(prev => ({
+                            <div className="space-y-2">
+                              <div className="flex items-center space-x-2 pb-2 border-b">
+                                <Checkbox
+                                  id="create-degree-all"
+                                  checked={
+                                    createData.allowedDegrees.length === 0
+                                  }
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setCreateData((prev) => ({
                                         ...prev,
-                                        allowedDegrees: checked
-                                          ? [...prev.allowedDegrees, degree.id]
-                                          : prev.allowedDegrees.filter(id => id !== degree.id)
+                                        allowedDegrees: [],
                                       }));
-                                    }}
-                                  />
-                                  <Label htmlFor={`create-degree-${degree.id}`} className="text-sm font-normal cursor-pointer">
-                                    {degree.name} <span className="text-muted-foreground text-xs">({degree.batchName})</span>
-                                  </Label>
-                                </div>
-                              ))}
+                                    }
+                                  }}
+                                />
+                                <Label
+                                  htmlFor="create-degree-all"
+                                  className="text-sm font-medium cursor-pointer"
+                                >
+                                  All Degrees
+                                </Label>
+                              </div>
+                              <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pt-1">
+                                {degrees.map((degree) => (
+                                  <div
+                                    key={degree.id}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Checkbox
+                                      id={`create-degree-${degree.id}`}
+                                      checked={createData.allowedDegrees.includes(
+                                        degree.id,
+                                      )}
+                                      onCheckedChange={(checked) => {
+                                        setCreateData((prev) => ({
+                                          ...prev,
+                                          allowedDegrees: checked
+                                            ? [
+                                                ...prev.allowedDegrees,
+                                                degree.id,
+                                              ]
+                                            : prev.allowedDegrees.filter(
+                                                (id) => id !== degree.id,
+                                              ),
+                                        }));
+                                      }}
+                                    />
+                                    <Label
+                                      htmlFor={`create-degree-${degree.id}`}
+                                      className="text-sm font-normal cursor-pointer"
+                                    >
+                                      {degree.name}{" "}
+                                      <span className="text-muted-foreground text-xs">
+                                        ({degree.batchName})
+                                      </span>
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           ) : (
-                             <p className="text-sm text-muted-foreground italic">No degrees found</p>
+                            <p className="text-sm text-muted-foreground italic">
+                              No degrees found
+                            </p>
                           )}
                         </div>
                       </AccordionContent>
@@ -606,270 +684,269 @@ export default function AdminsPage() {
                 <Label>Permissions</Label>
                 <div className="border rounded-md p-2">
                   <Accordion type="single" collapsible className="w-full">
-                      {/* Structure */}
-                      <AccordionItem value="structure">
-                        <AccordionTrigger>
-                          Structure (Batches, Degrees)
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 pl-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-view-structure"
-                                checked={createData.canViewStructure}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canViewStructure: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-view-structure"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                View
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-edit-structure"
-                                checked={createData.canEditStructure}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canEditStructure: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-edit-structure"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                Edit
-                              </Label>
-                            </div>
+                    {/* Structure */}
+                    <AccordionItem value="structure">
+                      <AccordionTrigger>
+                        Structure (Batches, Degrees)
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 pl-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-view-structure"
+                              checked={createData.canViewStructure}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canViewStructure: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-view-structure"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              View
+                            </Label>
                           </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-edit-structure"
+                              checked={createData.canEditStructure}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canEditStructure: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-edit-structure"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              Edit
+                            </Label>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
 
-                      {/* Students */}
-                      <AccordionItem value="students">
-                        <AccordionTrigger>Students</AccordionTrigger>
-                        <AccordionContent>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 pl-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-view-students"
-                                checked={createData.canViewStudents}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canViewStudents: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-view-students"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                View
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-edit-students"
-                                checked={createData.canEditStudents}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canEditStudents: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-edit-students"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                Edit
-                              </Label>
-                            </div>
+                    {/* Students */}
+                    <AccordionItem value="students">
+                      <AccordionTrigger>Students</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 pl-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-view-students"
+                              checked={createData.canViewStudents}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canViewStudents: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-view-students"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              View
+                            </Label>
                           </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-edit-students"
+                              checked={createData.canEditStudents}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canEditStudents: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-edit-students"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              Edit
+                            </Label>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
 
-                      {/* Modules */}
-                      <AccordionItem value="modules">
-                        <AccordionTrigger>Modules</AccordionTrigger>
-                        <AccordionContent>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 pl-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-view-modules"
-                                checked={createData.canViewModules}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canViewModules: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-view-modules"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                View
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-edit-modules"
-                                checked={createData.canEditModules}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canEditModules: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-edit-modules"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                Edit
-                              </Label>
-                            </div>
+                    {/* Modules */}
+                    <AccordionItem value="modules">
+                      <AccordionTrigger>Modules</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 pl-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-view-modules"
+                              checked={createData.canViewModules}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canViewModules: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-view-modules"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              View
+                            </Label>
                           </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-edit-modules"
+                              checked={createData.canEditModules}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canEditModules: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-edit-modules"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              Edit
+                            </Label>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
 
-                      {/* Invitations */}
-                      <AccordionItem value="invitations">
-                        <AccordionTrigger>Invitations</AccordionTrigger>
-                        <AccordionContent>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 pl-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-view-invitations"
-                                checked={createData.canViewInvitations}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canViewInvitations: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-view-invitations"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                View
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-edit-invitations"
-                                checked={createData.canEditInvitations}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canEditInvitations: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-edit-invitations"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                Edit
-                              </Label>
-                            </div>
+                    {/* Invitations */}
+                    <AccordionItem value="invitations">
+                      <AccordionTrigger>Invitations</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 pl-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-view-invitations"
+                              checked={createData.canViewInvitations}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canViewInvitations: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-view-invitations"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              View
+                            </Label>
                           </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-edit-invitations"
+                              checked={createData.canEditInvitations}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canEditInvitations: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-edit-invitations"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              Edit
+                            </Label>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
 
-                      {/* Tools */}
-                      <AccordionItem value="tools">
-                        <AccordionTrigger>Tools & System</AccordionTrigger>
-                        <AccordionContent>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 pl-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-scrape"
-                                checked={createData.canScrape}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canScrape: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-scrape"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                Scraper
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-parse-pdf"
-                                checked={createData.canParsePDF}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canParsePDF: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-parse-pdf"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                PDF Parser
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-manage-admins"
-                                checked={createData.canManageAdmins}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canManageAdmins: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-manage-admins"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                Manage Admins
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="create-assign-modules"
-                                checked={createData.canAssignModules}
-                                onCheckedChange={(checked) =>
-                                  setCreateData({
-                                    ...createData,
-                                    canAssignModules: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor="create-assign-modules"
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                Assign Modules
-                              </Label>
-                            </div>
+                    {/* Tools */}
+                    <AccordionItem value="tools">
+                      <AccordionTrigger>Tools & System</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 pl-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-scrape"
+                              checked={createData.canScrape}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canScrape: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-scrape"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              Scraper
+                            </Label>
                           </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-parse-pdf"
+                              checked={createData.canParsePDF}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canParsePDF: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-parse-pdf"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              PDF Parser
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-manage-admins"
+                              checked={createData.canManageAdmins}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canManageAdmins: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-manage-admins"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              Manage Admins
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="create-assign-modules"
+                              checked={createData.canAssignModules}
+                              onCheckedChange={(checked) =>
+                                setCreateData({
+                                  ...createData,
+                                  canAssignModules: checked === true,
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="create-assign-modules"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              Assign Modules
+                            </Label>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 </div>
               </div>
             </div>
@@ -939,6 +1016,163 @@ export default function AdminsPage() {
                     setEditData({ ...editData, password: e.target.value })
                   }
                 />
+              </div>
+
+              <div className="space-y-4 pt-2">
+                <Label>Scope of Access (Optional)</Label>
+                <div className="border rounded-md p-2">
+                  <Accordion type="single" collapsible className="w-full">
+                    {/* Batch Scope */}
+                    <AccordionItem value="batches">
+                      <AccordionTrigger>Restricted Batches</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="p-2 space-y-2">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Select batches this admin is allowed to access.
+                            Leave empty for all batches.
+                          </p>
+                          {batches && batches.length > 0 ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center space-x-2 pb-2 border-b">
+                                <Checkbox
+                                  id="edit-batch-all"
+                                  checked={editData.allowedBatches.length === 0}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setEditData((prev) => ({
+                                        ...prev,
+                                        allowedBatches: [],
+                                      }));
+                                    }
+                                  }}
+                                />
+                                <Label
+                                  htmlFor="edit-batch-all"
+                                  className="text-sm font-medium cursor-pointer"
+                                >
+                                  All Batches
+                                </Label>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pt-1">
+                                {batches.map((batch) => (
+                                  <div
+                                    key={batch.id}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Checkbox
+                                      id={`edit-batch-${batch.id}`}
+                                      checked={editData.allowedBatches.includes(
+                                        batch.id,
+                                      )}
+                                      onCheckedChange={(checked) => {
+                                        setEditData((prev) => ({
+                                          ...prev,
+                                          allowedBatches: checked
+                                            ? [...prev.allowedBatches, batch.id]
+                                            : prev.allowedBatches.filter(
+                                                (id) => id !== batch.id,
+                                              ),
+                                        }));
+                                      }}
+                                    />
+                                    <Label
+                                      htmlFor={`edit-batch-${batch.id}`}
+                                      className="text-sm font-normal cursor-pointer"
+                                    >
+                                      {batch.name}
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic">
+                              No batches found
+                            </p>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    {/* Degree Scope */}
+                    <AccordionItem value="degrees">
+                      <AccordionTrigger>Restricted Degrees</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="p-2 space-y-2">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Select degrees this admin is allowed to access.
+                            Leave empty for all.
+                          </p>
+                          {degrees && degrees.length > 0 ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center space-x-2 pb-2 border-b">
+                                <Checkbox
+                                  id="edit-degree-all"
+                                  checked={editData.allowedDegrees.length === 0}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setEditData((prev) => ({
+                                        ...prev,
+                                        allowedDegrees: [],
+                                      }));
+                                    }
+                                  }}
+                                />
+                                <Label
+                                  htmlFor="edit-degree-all"
+                                  className="text-sm font-medium cursor-pointer"
+                                >
+                                  All Degrees
+                                </Label>
+                              </div>
+                              <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pt-1">
+                                {degrees.map((degree) => (
+                                  <div
+                                    key={degree.id}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Checkbox
+                                      id={`edit-degree-${degree.id}`}
+                                      checked={editData.allowedDegrees.includes(
+                                        degree.id,
+                                      )}
+                                      onCheckedChange={(checked) => {
+                                        setEditData((prev) => ({
+                                          ...prev,
+                                          allowedDegrees: checked
+                                            ? [
+                                                ...prev.allowedDegrees,
+                                                degree.id,
+                                              ]
+                                            : prev.allowedDegrees.filter(
+                                                (id) => id !== degree.id,
+                                              ),
+                                        }));
+                                      }}
+                                    />
+                                    <Label
+                                      htmlFor={`edit-degree-${degree.id}`}
+                                      className="text-sm font-normal cursor-pointer"
+                                    >
+                                      {degree.name}{" "}
+                                      <span className="text-muted-foreground text-xs">
+                                        ({degree.batchName})
+                                      </span>
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic">
+                              No degrees found
+                            </p>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
               </div>
 
               <div className="space-y-4 pt-2">

@@ -71,52 +71,58 @@ function StudentAccessContent() {
   const [newGrade, setNewGrade] = useState<string>("");
   const [updating, setUpdating] = useState(false);
 
-  const handleSubmit = useCallback(async (submittedCode: string) => {
-    if (!submittedCode.trim()) {
-      setError("Please enter an invitation code");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/student-access", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: submittedCode.trim() }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Invalid invitation code");
-        setStudent(null);
+  const handleSubmit = useCallback(
+    async (submittedCode: string, isSilent: boolean = false) => {
+      if (!submittedCode.trim()) {
+        setError("Please enter an invitation code");
         return;
       }
 
-      console.log("Received student data:", data.student);
-      setStudent(data.student);
-      setRemainingTime(data.remainingTime);
-      const expiresAtDate = new Date(data.expiresAt);
-      setExpiresAt(expiresAtDate);
+      if (!isSilent) setLoading(true);
+      setError(null);
 
-      // Save session to storage
-      sessionStorage.setItem(
-        "student_session",
-        JSON.stringify({
-          student: data.student,
-          expiresAt: data.expiresAt,
-          remainingTime: data.remainingTime,
-        }),
-      );
-    } catch (err) {
-      console.error("Error validating code:", err);
-      setError("Failed to validate invitation code");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      try {
+        const response = await fetch("/api/student-access", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: submittedCode.trim() }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (!isSilent) {
+            setError(data.error || "Invalid invitation code");
+            setStudent(null);
+          }
+          return;
+        }
+
+        console.log("Received student data:", data.student);
+        setStudent(data.student);
+        setRemainingTime(data.remainingTime);
+        const expiresAtDate = new Date(data.expiresAt);
+        setExpiresAt(expiresAtDate);
+
+        // Save session to storage - INCLUDING CODE
+        sessionStorage.setItem(
+          "student_session",
+          JSON.stringify({
+            student: data.student,
+            expiresAt: data.expiresAt,
+            remainingTime: data.remainingTime,
+            code: submittedCode.trim(),
+          }),
+        );
+      } catch (err) {
+        console.error("Error validating code:", err);
+        if (!isSilent) setError("Failed to validate invitation code");
+      } finally {
+        if (!isSilent) setLoading(false);
+      }
+    },
+    [],
+  );
 
   const handleEdit = (module: ModuleGrade) => {
     console.log("Editing module:", module);
@@ -188,24 +194,27 @@ function StudentAccessContent() {
 
   // Check session storage or auto-submit from URL
   useEffect(() => {
-    // If student is already loaded, we don't need to check session or URL
-    if (student) return;
-
     // 1. Try session storage first
     const savedSession = sessionStorage.getItem("student_session");
+    let sessionCode = null;
+
     if (savedSession) {
       try {
         const session = JSON.parse(savedSession);
         const expiresAt = new Date(session.expiresAt);
-        if (new Date() < expiresAt) {
-          setStudent(session.student);
-          setExpiresAt(expiresAt);
+        // We might have saved the code in the session now, or we can try to get it from URL/state
+        sessionCode = session.code;
 
-          const now = new Date();
-          setRemainingTime(
-            Math.floor((expiresAt.getTime() - now.getTime()) / 1000),
-          );
-          return;
+        if (new Date() < expiresAt) {
+          // Optimistically set student data from cache for instant load
+          if (!student) {
+            setStudent(session.student);
+            setExpiresAt(expiresAt);
+            const now = new Date();
+            setRemainingTime(
+              Math.floor((expiresAt.getTime() - now.getTime()) / 1000),
+            );
+          }
         } else {
           sessionStorage.removeItem("student_session");
         }
@@ -214,17 +223,19 @@ function StudentAccessContent() {
       }
     }
 
-    // 2. If no valid session, check URL
-    if (codeFromUrl) {
-      setCode(codeFromUrl);
-      handleSubmit(codeFromUrl);
+    // 2. Determine which code to use for validation/refresh
+    // Priority: URL Code > Session Code (if we start saving it) > State Code
+    const codeToUse = codeFromUrl || sessionCode;
+
+    if (codeToUse) {
+      if (!code) setCode(codeToUse); // Sync state
+
+      // Always validate/refresh from server to ensure data (lik Rank) is fresh
+      // but don't show full loading state if we already have student data (silent refresh)
+      const isSilent = !!savedSession || !!student;
+      handleSubmit(codeToUse, isSilent);
     }
-    // We only want this to run on mount or when codeFromUrl changes.
-    // We strictly depend on `codeFromUrl` and `handleSubmit`.
-    // We include `student` in the dependency array to satisfy linter, but we exit early if `student` exists.
-    // However, if `setStudent` causes a re-render, `student` becomes TRUTHY, so we hit the `if (student) return;`
-    // and STOP the loop.
-  }, [codeFromUrl, handleSubmit, student]);
+  }, [codeFromUrl, handleSubmit]);
 
   // Countdown timer
   useEffect(() => {
