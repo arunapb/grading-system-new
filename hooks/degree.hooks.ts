@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
 export interface DegreeInfo {
+  id: string;
   name: string;
+  batchName: string;
   students: number;
   hasData: boolean;
 }
@@ -14,13 +16,16 @@ interface DegreesResponse {
   error?: string;
 }
 
-export function useDegrees(batch: string) {
+export function useDegrees(batch?: string) {
+  const queryKey = batch ? ["degrees", batch] : ["degrees", "all"];
+  const url = batch
+    ? `/api/degrees?batch=${encodeURIComponent(batch)}`
+    : "/api/degrees";
+
   return useQuery({
-    queryKey: ["degrees", batch],
+    queryKey,
     queryFn: async () => {
-      const response = await fetch(
-        `/api/degrees?batch=${encodeURIComponent(batch)}`,
-      );
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch degrees");
       }
@@ -30,6 +35,5 @@ export function useDegrees(batch: string) {
       }
       return data.degrees;
     },
-    enabled: !!batch,
   });
 }

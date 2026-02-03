@@ -59,6 +59,8 @@ import {
   useGenerateResetCode,
   AdminUser,
 } from "@/hooks/admin.hooks";
+import { useBatches, BatchInfo } from "@/hooks/batch.hooks";
+import { useDegrees, DegreeInfo } from "@/hooks/degree.hooks";
 
 import { useSession } from "next-auth/react";
 
@@ -67,6 +69,8 @@ export default function AdminsPage() {
   const isSuperAdmin = (session?.user as any)?.role === "SUPER_ADMIN";
 
   const { data: admins, isLoading } = useAdmins();
+  const { data: batches } = useBatches();
+  const { data: degrees } = useDegrees(); // Fetch all degrees
   const createAdmin = useCreateAdmin();
   const updateAdmin = useUpdateAdmin();
   const deleteAdmin = useDeleteAdmin();
@@ -94,6 +98,8 @@ export default function AdminsPage() {
     canParsePDF: false,
     canManageAdmins: false,
     canAssignModules: false,
+    allowedBatches: [] as string[],
+    allowedDegrees: [] as string[],
   });
 
   const [editData, setEditData] = useState({
@@ -112,6 +118,8 @@ export default function AdminsPage() {
     canParsePDF: false,
     canManageAdmins: false,
     canAssignModules: false,
+    allowedBatches: [] as string[],
+    allowedDegrees: [] as string[],
   });
 
   const [resetCodeData, setResetCodeData] = useState<{
@@ -142,6 +150,8 @@ export default function AdminsPage() {
         canParsePDF: false,
         canManageAdmins: false,
         canAssignModules: false,
+        allowedBatches: [],
+        allowedDegrees: [],
       });
     } catch (error: any) {
       toast.error(error.message);
@@ -175,6 +185,8 @@ export default function AdminsPage() {
     payload.canParsePDF = editData.canParsePDF;
     payload.canManageAdmins = editData.canManageAdmins;
     payload.canAssignModules = editData.canAssignModules;
+    payload.allowedBatches = editData.allowedBatches;
+    payload.allowedDegrees = editData.allowedDegrees;
 
     try {
       await updateAdmin.mutateAsync(payload);
@@ -250,6 +262,8 @@ export default function AdminsPage() {
       canParsePDF: admin.canParsePDF || false,
       canManageAdmins: admin.canManageAdmins || false,
       canAssignModules: admin.canAssignModules || false,
+      allowedBatches: admin.allowedBatches?.map((b) => b.id) || [],
+      allowedDegrees: admin.allowedDegrees?.map((d) => d.id) || [],
     });
     setShowEditDialog(true);
   };
@@ -505,12 +519,93 @@ export default function AdminsPage() {
                 />
               </div>
 
+
+
+              <div className="space-y-4 pt-2">
+                <Label>Scope of Access (Optional)</Label>
+                <div className="border rounded-md p-2">
+                  <Accordion type="single" collapsible className="w-full">
+                    {/* Batch Scope */}
+                    <AccordionItem value="batches">
+                      <AccordionTrigger>Restricted Batches</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="p-2 space-y-2">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Select batches this admin is allowed to access. Leave empty for all batches.
+                          </p>
+                          {batches && batches.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                              {batches.map((batch) => (
+                                <div key={batch.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`create-batch-${batch.id}`}
+                                    checked={createData.allowedBatches.includes(batch.id)}
+                                    onCheckedChange={(checked) => {
+                                      setCreateData(prev => ({
+                                        ...prev,
+                                        allowedBatches: checked
+                                          ? [...prev.allowedBatches, batch.id]
+                                          : prev.allowedBatches.filter(id => id !== batch.id)
+                                      }));
+                                    }}
+                                  />
+                                  <Label htmlFor={`create-batch-${batch.id}`} className="text-sm font-normal cursor-pointer">
+                                    {batch.name}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                             <p className="text-sm text-muted-foreground italic">No batches found</p>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    {/* Degree Scope */}
+                    <AccordionItem value="degrees">
+                      <AccordionTrigger>Restricted Degrees</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="p-2 space-y-2">
+                           <p className="text-sm text-muted-foreground mb-2">
+                            Select degrees this admin is allowed to access. Leave empty for all.
+                          </p>
+                          {degrees && degrees.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
+                              {degrees.map((degree) => (
+                                <div key={degree.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`create-degree-${degree.id}`}
+                                    checked={createData.allowedDegrees.includes(degree.id)}
+                                    onCheckedChange={(checked) => {
+                                      setCreateData(prev => ({
+                                        ...prev,
+                                        allowedDegrees: checked
+                                          ? [...prev.allowedDegrees, degree.id]
+                                          : prev.allowedDegrees.filter(id => id !== degree.id)
+                                      }));
+                                    }}
+                                  />
+                                  <Label htmlFor={`create-degree-${degree.id}`} className="text-sm font-normal cursor-pointer">
+                                    {degree.name} <span className="text-muted-foreground text-xs">({degree.batchName})</span>
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                             <p className="text-sm text-muted-foreground italic">No degrees found</p>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+              </div>
+
               <div className="space-y-4 pt-2">
                 <Label>Permissions</Label>
-                <div className="space-y-4 pt-2">
-                  <Label>Permissions</Label>
-                  <div className="border rounded-md p-2">
-                    <Accordion type="single" collapsible className="w-full">
+                <div className="border rounded-md p-2">
+                  <Accordion type="single" collapsible className="w-full">
                       {/* Structure */}
                       <AccordionItem value="structure">
                         <AccordionTrigger>
@@ -1138,7 +1233,7 @@ export default function AdminsPage() {
                   variant="outline"
                   size="icon"
                   onClick={() =>
-                    resetCodeData && copyToClipboard(resetCodeData.code)
+                    resetCodeData?.code && copyToClipboard(resetCodeData.code)
                   }
                 >
                   {copiedCode === resetCodeData?.code ? (

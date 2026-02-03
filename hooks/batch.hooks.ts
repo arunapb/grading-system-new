@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 export interface BatchInfo {
+  id: string;
   name: string;
   degrees: number;
   studentCount: number;

@@ -51,6 +51,10 @@ export interface AdminUser {
   canParsePDF?: boolean;
   canManageAdmins?: boolean;
   canAssignModules?: boolean;
+  canViewGrades?: boolean;
+  canEditGrades?: boolean;
+  allowedBatches?: { id: string; name: string }[];
+  allowedDegrees?: { id: string; name: string }[];
 }
 
 // Hooks
@@ -182,6 +186,9 @@ export function useCreateAdmin() {
       canScrape?: boolean;
       canParsePDF?: boolean;
       canManageAdmins?: boolean;
+      canAssignModules?: boolean;
+      allowedBatches?: string[];
+      allowedDegrees?: string[];
     }) => {
       const response = await fetch("/api/admin/admins", {
         method: "POST",
@@ -220,6 +227,9 @@ export function useUpdateAdmin() {
       canScrape?: boolean;
       canParsePDF?: boolean;
       canManageAdmins?: boolean;
+      canAssignModules?: boolean;
+      allowedBatches?: string[];
+      allowedDegrees?: string[];
     }) => {
       const response = await fetch("/api/admin/admins", {
         method: "PATCH",
