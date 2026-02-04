@@ -81,6 +81,36 @@ export async function parseStudentListPDF(
             .trim();
         }
 
+        // If name is still empty/invalid, look at the next line
+        if (name.length < 2 && i + 1 < lines.length) {
+          const nextLine = lines[i + 1];
+          // Check if next line looks like a name and NOT a new record
+          // Not a new record: doesn't contain a reg number
+          // Looks like name: starts with letters, maybe ends with gender
+          const hasRegNo = regNoPattern.test(nextLine);
+          if (!hasRegNo) {
+            const nextLineNameMatch =
+              /^([A-Z][A-Z\s.]+?)(?:\s+[MF]\s*$|\s+[MF]\s+|\s*$)/.exec(
+                nextLine,
+              );
+            if (nextLineNameMatch) {
+              name = nextLineNameMatch[1].trim();
+              // We successfully consumed the next line as a name
+              // Optionally we could skip it, but the outer loop will just process it and find no reg number, which is fine
+            } else {
+              // Try loose cleanup on next line
+              const looseName = nextLine
+                .replace(/\s+[MF]\s*$/i, "")
+                .replace(/\s+[MF]\s+/i, " ")
+                .trim();
+              // Ensure it starts with a letter and isn't just a number (like a row number "10")
+              if (/^[A-Z]/.test(looseName) && looseName.length >= 2) {
+                name = looseName;
+              }
+            }
+          }
+        }
+
         // Only add if we got a reasonable name (at least 2 characters)
         if (name.length >= 2) {
           students.push({

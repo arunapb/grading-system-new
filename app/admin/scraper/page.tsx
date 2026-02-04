@@ -29,6 +29,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -47,8 +55,11 @@ import {
   Search,
   Image as ImageIcon,
   Upload,
+  AlertCircle,
   FileUp,
   X,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +92,14 @@ export default function ScraperPage() {
   const [progressState, setProgressState] = useState<ProgressState | null>(
     null,
   );
+
+  // Edit State
+  const [editingStudent, setEditingStudent] = useState<{
+    index: number;
+    indexNumber: string;
+    name: string;
+  } | null>(null);
+  const [editForm, setEditForm] = useState({ indexNumber: "", name: "" });
   const [result, setResult] = useState<{
     count: number;
     students: any[];
@@ -232,10 +251,11 @@ export default function ScraperPage() {
       return;
     }
 
-    if (action === "save" && (!pdfDegree || !pdfBatchNumber)) {
-      toast.error("Please select batch and degree");
-      return;
-    }
+    // Optional validation: checking action === "save" but allow empty degree/batch for auto-mapping
+    // if (action === "save" && (!pdfDegree || !pdfBatchNumber)) {
+    //   toast.error("Please select batch and degree");
+    //   return;
+    // }
 
     const formData = new FormData();
     formData.append("file", pdfFile);
@@ -294,6 +314,36 @@ export default function ScraperPage() {
     setPdfFile(null);
     setPdfParsedStudents([]);
     setPdfResult(null);
+  };
+
+  const handleEditClick = (index: number, student: any) => {
+    setEditingStudent({
+      index,
+      indexNumber: student.indexNumber,
+      name: student.name,
+    });
+    setEditForm({ indexNumber: student.indexNumber, name: student.name });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingStudent) return;
+
+    // Update the students array
+    const updatedStudents = [...pdfParsedStudents];
+    updatedStudents[editingStudent.index] = {
+      ...updatedStudents[editingStudent.index],
+      indexNumber: editForm.indexNumber,
+      name: editForm.name,
+    };
+
+    setPdfParsedStudents(updatedStudents);
+    setEditingStudent(null);
+  };
+
+  const handleDeleteStudent = (index: number) => {
+    const updatedStudents = [...pdfParsedStudents];
+    updatedStudents.splice(index, 1);
+    setPdfParsedStudents(updatedStudents);
   };
 
   // Show loading while checking permissions
@@ -451,16 +501,29 @@ export default function ScraperPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 text-xs text-muted-foreground p-2 bg-muted/50 rounded flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>
+              If Degree or Batch is left empty, the system will try to
+              auto-detect them from the Student Index Number (e.g. 240xxx →
+              Batch 24, IT).
+            </span>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="pdfDegree">Degree</Label>
+              <Label htmlFor="pdfDegree">
+                Degree{" "}
+                <span className="text-muted-foreground font-normal">
+                  (Optional)
+                </span>
+              </Label>
               <Select
                 value={pdfDegree}
                 onValueChange={setPdfDegree}
                 disabled={isPdfLoading || isPdfSaving}
               >
                 <SelectTrigger id="pdfDegree">
-                  <SelectValue placeholder="Select degree" />
+                  <SelectValue placeholder="Auto-detect from Index" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="it">IT</SelectItem>
@@ -471,10 +534,15 @@ export default function ScraperPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pdfBatchNumber">Batch Number</Label>
+              <Label htmlFor="pdfBatchNumber">
+                Batch Number{" "}
+                <span className="text-muted-foreground font-normal">
+                  (Optional)
+                </span>
+              </Label>
               <Input
                 id="pdfBatchNumber"
-                placeholder="e.g., 21, 22"
+                placeholder="Auto-detect (e.g. 24)"
                 value={pdfBatchNumber}
                 onChange={(e) => setPdfBatchNumber(e.target.value)}
                 disabled={isPdfLoading || isPdfSaving}
@@ -560,6 +628,7 @@ export default function ScraperPage() {
                       <TableHead className="w-16">#</TableHead>
                       <TableHead>Reg. No</TableHead>
                       <TableHead>Name</TableHead>
+                      <TableHead className="w-20">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -572,6 +641,26 @@ export default function ScraperPage() {
                           {student.indexNumber}
                         </TableCell>
                         <TableCell>{student.name || "—"}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleEditClick(idx, student)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteStudent(idx)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -854,6 +943,53 @@ export default function ScraperPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Student Dialog */}
+      <Dialog
+        open={!!editingStudent}
+        onOpenChange={(open) => !open && setEditingStudent(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Student</DialogTitle>
+            <DialogDescription>
+              Modify the details for this student record.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-indexNumber">Registration Number</Label>
+              <Input
+                id="edit-indexNumber"
+                value={editForm.indexNumber}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    indexNumber: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Student Name</Label>
+              <Input
+                id="edit-name"
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, name: e.target.value }))
+                }
+                placeholder="e.g. S.K. PERERA"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingStudent(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

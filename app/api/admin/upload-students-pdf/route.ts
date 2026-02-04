@@ -57,44 +57,68 @@ export async function POST(request: NextRequest) {
     }
 
     // Action is "save" - save students to database
-    // Find or create the batch
-    const batchName = batch.toLowerCase().startsWith("batch")
-      ? batch
-      : `Batch ${batch}`;
 
-    let batchRecord = await prisma.batch.findFirst({
-      where: { name: { equals: batchName, mode: "insensitive" } },
-    });
+    // Global batch/degree (if provided)
+    const globalBatchName = batch
+      ? batch.toLowerCase().startsWith("batch")
+        ? batch
+        : `Batch ${batch}`
+      : null;
+    const globalDegreeName = degree ? degree.toUpperCase() : null;
 
-    if (!batchRecord) {
-      batchRecord = await prisma.batch.create({
-        data: { name: batchName },
+    // Cache likely batches/degrees to reduce DB calls
+    const batchCache = new Map<string, any>();
+    const degreeCache = new Map<string, any>(); // key: "degreeName-batchId"
+
+    // Helper to get or create batch
+    const getBatch = async (name: string) => {
+      if (batchCache.has(name)) return batchCache.get(name);
+
+      let record = await prisma.batch.findFirst({
+        where: { name: { equals: name, mode: "insensitive" } },
       });
-    }
 
-    // Find or create the degree
-    const degreeName = degree.toUpperCase();
-    let degreeRecord = await prisma.degree.findFirst({
-      where: {
-        name: { equals: degreeName, mode: "insensitive" },
-        batchId: batchRecord.id,
-      },
-    });
+      if (!record) {
+        record = await prisma.batch.create({
+          data: { name },
+        });
+      }
 
-    if (!degreeRecord) {
-      degreeRecord = await prisma.degree.create({
-        data: {
-          name: degreeName,
-          batchId: batchRecord.id,
+      batchCache.set(name, record);
+      return record;
+    };
+
+    // Helper to get or create degree
+    const getDegree = async (name: string, batchId: string) => {
+      const key = `${name}-${batchId}`;
+      if (degreeCache.has(key)) return degreeCache.get(key);
+
+      let record = await prisma.degree.findFirst({
+        where: {
+          name: { equals: name, mode: "insensitive" },
+          batchId: batchId,
         },
       });
-    }
+
+      if (!record) {
+        record = await prisma.degree.create({
+          data: {
+            name,
+            batchId,
+          },
+        });
+      }
+      degreeCache.set(key, record);
+      return record;
+    };
 
     // Save students - skip duplicates based on indexNumber
     const savedStudents: Array<{
       indexNumber: string;
       name: string;
       status: string;
+      batch?: string;
+      degree?: string;
     }> = [];
     const skippedStudents: Array<{
       indexNumber: string;
@@ -104,13 +128,49 @@ export async function POST(request: NextRequest) {
 
     for (const student of parseResult.students) {
       try {
-        // Check if student already exists with this indexNumber (globally unique as per user)
+        // Determine Batch
+        let batchName = globalBatchName;
+        if (!batchName) {
+          // Infer batch from first 2 digits of index number (e.g. "240..." -> "Batch 24")
+          // Assuming index is at least 2 chars
+          const prefix = student.indexNumber.substring(0, 2);
+          if (/^\d{2}$/.test(prefix)) {
+            batchName = `Batch ${prefix}`;
+          } else {
+            throw new Error(
+              `Could not infer batch for index ${student.indexNumber}`,
+            );
+          }
+        }
+
+        // Determine Degree
+        let degreeName = globalDegreeName;
+        if (!degreeName) {
+          // Infer from mapping
+          // 240, 241, 242 -> IT
+          const prefix3 = student.indexNumber.substring(0, 3);
+          if (["240", "241", "242"].includes(prefix3)) {
+            degreeName = "IT";
+          } else {
+            // Fallback or error?
+            // User only specified IT mapping.
+            // We'll mark as skipped if unknown to be safe.
+            throw new Error(
+              `Could not infer degree for index ${student.indexNumber} (prefix ${prefix3})`,
+            );
+          }
+        }
+
+        // Get DB records
+        const batchRecord = await getBatch(batchName);
+        const degreeRecord = await getDegree(degreeName, batchRecord.id);
+
+        // Check if student already exists
         const existingByIndexNumber = await prisma.student.findFirst({
           where: { indexNumber: student.indexNumber },
         });
 
         if (existingByIndexNumber) {
-          // Student with this registration number already exists - skip
           skippedStudents.push({
             ...student,
             reason: "Already exists",
@@ -123,10 +183,15 @@ export async function POST(request: NextRequest) {
           data: {
             indexNumber: student.indexNumber,
             name: student.name || null,
-            degreeId: degreeRecord.id,
+            degreeId: degreeRecord.id, // Use inferred or global degree
           },
         });
-        savedStudents.push({ ...student, status: "created" });
+        savedStudents.push({
+          ...student,
+          status: "created",
+          batch: batchName,
+          degree: degreeName,
+        });
       } catch (err) {
         console.error(`Error saving student ${student.indexNumber}:`, err);
         skippedStudents.push({ ...student, reason: String(err) });
@@ -138,8 +203,8 @@ export async function POST(request: NextRequest) {
     await logActivity("STUDENTS_UPLOADED_PDF", {
       adminId: user?.email,
       adminName: user?.name,
-      batch: batchName,
-      degree: degreeName,
+      batch: globalBatchName || "Mixed/Auto",
+      degree: globalDegreeName || "Mixed/Auto",
       totalParsed: parseResult.students.length,
       saved: savedStudents.length,
       skipped: skippedStudents.length,
@@ -154,8 +219,8 @@ export async function POST(request: NextRequest) {
       skipped: skippedStudents,
       count: savedStudents.length,
       skippedCount: skippedStudents.length,
-      batch: batchName,
-      degree: degreeName,
+      batch: globalBatchName || "Mixed/Auto",
+      degree: globalDegreeName || "Mixed/Auto",
     });
   } catch (error) {
     console.error("Error processing PDF:", error);
