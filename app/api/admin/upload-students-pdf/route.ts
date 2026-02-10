@@ -3,6 +3,11 @@ import { checkPermission } from "@/lib/permissions";
 import { parseStudentListPDF } from "@/lib/student-list-parser";
 import prisma from "@/lib/db/prisma";
 import { logActivity } from "@/lib/db/activity.service";
+import {
+  inferDegreeFromIndex,
+  inferBatchFromIndex,
+  DegreePrefixMap,
+} from "@/lib/degree-mapping";
 
 // POST - Parse PDF and optionally save students
 export async function POST(request: NextRequest) {
@@ -18,6 +23,10 @@ export async function POST(request: NextRequest) {
     const batch = formData.get("batch") as string | null;
     const degree = formData.get("degree") as string | null;
     const action = formData.get("action") as string | null; // "preview" or "save"
+    const degreePrefixMapRaw = formData.get("degreePrefixMap") as string | null;
+    const manualDegreeAssignmentsRaw = formData.get(
+      "manualDegreeAssignments",
+    ) as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -29,6 +38,35 @@ export async function POST(request: NextRequest) {
         { error: "File must be a PDF" },
         { status: 400 },
       );
+    }
+
+    // Parse degree prefix map (if provided)
+    let degreePrefixMap: DegreePrefixMap = {};
+    if (degreePrefixMapRaw) {
+      try {
+        degreePrefixMap = JSON.parse(degreePrefixMapRaw);
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid degree prefix map format" },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Parse manual degree assignments (if provided)
+    let manualDegreeAssignments: Record<
+      string,
+      { degreeName: string; batchName: string }
+    > = {};
+    if (manualDegreeAssignmentsRaw) {
+      try {
+        manualDegreeAssignments = JSON.parse(manualDegreeAssignmentsRaw);
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid manual degree assignments format" },
+          { status: 400 },
+        );
+      }
     }
 
     // Convert file to buffer
@@ -45,13 +83,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If action is "preview", just return parsed students without saving
-    if (action === "preview" || !batch || !degree) {
+    // If action is "preview", return parsed students with inferred degree/batch info
+    if (action === "preview") {
+      const studentsWithInference = parseResult.students.map((student) => {
+        const inferredBatch = inferBatchFromIndex(student.indexNumber);
+
+        // Use global degree if provided, otherwise try prefix map
+        let inferredDegree: string | null = null;
+        if (degree) {
+          inferredDegree = degree.toUpperCase();
+        } else {
+          inferredDegree = inferDegreeFromIndex(
+            student.indexNumber,
+            degreePrefixMap,
+          );
+        }
+
+        return {
+          ...student,
+          inferredBatch: batch
+            ? batch.toLowerCase().startsWith("batch")
+              ? batch
+              : `Batch ${batch}`
+            : inferredBatch,
+          inferredDegree,
+        };
+      });
+
       return NextResponse.json({
         success: true,
         action: "preview",
-        students: parseResult.students,
-        count: parseResult.students.length,
+        students: studentsWithInference,
+        count: studentsWithInference.length,
         batchInfo: parseResult.batchInfo,
       });
     }
@@ -128,42 +191,52 @@ export async function POST(request: NextRequest) {
 
     for (const student of parseResult.students) {
       try {
-        // Determine Batch
+        // 1. Determine batch name
         let batchName = globalBatchName;
         if (!batchName) {
-          // Infer batch from first 2 digits of index number (e.g. "240..." -> "Batch 24")
-          // Assuming index is at least 2 chars
-          const prefix = student.indexNumber.substring(0, 2);
-          if (/^\d{2}$/.test(prefix)) {
-            batchName = `Batch ${prefix}`;
+          // Check manual assignment first
+          const manual = manualDegreeAssignments[student.indexNumber];
+          if (manual?.batchName) {
+            batchName = manual.batchName.toLowerCase().startsWith("batch")
+              ? manual.batchName
+              : `Batch ${manual.batchName}`;
           } else {
-            throw new Error(
-              `Could not infer batch for index ${student.indexNumber}`,
-            );
+            // Infer batch from first 2 digits of index number
+            batchName = inferBatchFromIndex(student.indexNumber);
+            if (!batchName) {
+              throw new Error(
+                `Could not infer batch for index ${student.indexNumber}`,
+              );
+            }
           }
         }
 
-        // Determine Degree
-        let degreeName = globalDegreeName;
+        // 2. Determine degree name
+        let degreeName: string | null = globalDegreeName;
         if (!degreeName) {
-          // Infer from mapping
-          // 240, 241, 242 -> IT
-          const prefix3 = student.indexNumber.substring(0, 3);
-          if (["240", "241", "242"].includes(prefix3)) {
-            degreeName = "IT";
+          // Check manual assignment first
+          const manual = manualDegreeAssignments[student.indexNumber];
+          if (manual?.degreeName) {
+            degreeName = manual.degreeName.toUpperCase();
           } else {
-            // Fallback or error?
-            // User only specified IT mapping.
-            // We'll mark as skipped if unknown to be safe.
-            throw new Error(
-              `Could not infer degree for index ${student.indexNumber} (prefix ${prefix3})`,
+            // Try prefix map inference
+            degreeName = inferDegreeFromIndex(
+              student.indexNumber,
+              degreePrefixMap,
             );
+            // If still null, degree stays null — student saved without degree
           }
         }
 
-        // Get DB records
+        // Get batch record (always required)
         const batchRecord = await getBatch(batchName);
-        const degreeRecord = await getDegree(degreeName, batchRecord.id);
+
+        // Get degree record (optional — can be null)
+        let degreeId: string | null = null;
+        if (degreeName) {
+          const degreeRecord = await getDegree(degreeName, batchRecord.id);
+          degreeId = degreeRecord.id;
+        }
 
         // Check if student already exists
         const existingByIndexNumber = await prisma.student.findFirst({
@@ -179,18 +252,28 @@ export async function POST(request: NextRequest) {
         }
 
         // Create new student
-        await prisma.student.create({
-          data: {
-            indexNumber: student.indexNumber,
-            name: student.name || null,
-            degreeId: degreeRecord.id, // Use inferred or global degree
-          },
-        });
+        if (degreeId) {
+          await prisma.student.create({
+            data: {
+              indexNumber: student.indexNumber,
+              name: student.name || null,
+              degree: { connect: { id: degreeId } },
+            },
+          });
+        } else {
+          await prisma.student.create({
+            data: {
+              indexNumber: student.indexNumber,
+              name: student.name || null,
+              degreeId: null,
+            },
+          });
+        }
         savedStudents.push({
           ...student,
           status: "created",
           batch: batchName,
-          degree: degreeName,
+          degree: degreeName || "Unassigned",
         });
       } catch (err) {
         console.error(`Error saving student ${student.indexNumber}:`, err);

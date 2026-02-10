@@ -210,8 +210,8 @@ export async function getAllStudentsWithCGPA(
         student.degree.batch &&
         !photoUrl.startsWith("http")
       ) {
-        const batchParam = encodeURIComponent(student.degree.batch.name);
-        const degreeParam = encodeURIComponent(student.degree.name);
+        const batchParam = encodeURIComponent(student.degree!.batch.name);
+        const degreeParam = encodeURIComponent(student.degree!.name);
         photoUrl = `/${batchParam}/${degreeParam}/${photoUrl}`;
       }
 
@@ -222,8 +222,8 @@ export async function getAllStudentsWithCGPA(
         cgpa,
         totalCredits,
         moduleCount: student.grades.length,
-        batch: student.degree.batch.name,
-        degree: student.degree.name,
+        batch: student.degree?.batch.name ?? "Unassigned",
+        degree: student.degree?.name ?? "Unassigned",
       };
     })
     .sort((a, b) => b.cgpa - a.cgpa);
@@ -314,8 +314,8 @@ export async function getStudentDetails(
 
   // Get rank
   // Use the student's actual batch and degree for ranking, not the optional params which might be missing
-  const actualBatchName = student.degree.batch.name;
-  const actualDegreeName = student.degree.name;
+  const actualBatchName = student.degree?.batch.name;
+  const actualDegreeName = student.degree?.name;
 
   const allStudents = await getAllStudentsWithCGPA(
     actualBatchName,
@@ -338,8 +338,8 @@ export async function getStudentDetails(
     !photoUrl.startsWith("http")
   ) {
     // encodeURIComponent is important for spaces in "Batch 21"
-    const batchParam = encodeURIComponent(student.degree.batch.name);
-    const degreeParam = encodeURIComponent(student.degree.name);
+    const batchParam = encodeURIComponent(student.degree!.batch.name);
+    const degreeParam = encodeURIComponent(student.degree!.name);
     // photoUrl in db is "photos/index.png", so we need to construct the full path
     photoUrl = `/${batchParam}/${degreeParam}/${photoUrl}`;
   }
@@ -348,8 +348,8 @@ export async function getStudentDetails(
     indexNumber: student.indexNumber,
     name: student.name,
     photoUrl,
-    batch: student.degree.batch.name,
-    degree: student.degree.name,
+    batch: student.degree?.batch.name ?? "Unassigned",
+    degree: student.degree?.name ?? "Unassigned",
     rank,
     cgpa,
     totalCredits,

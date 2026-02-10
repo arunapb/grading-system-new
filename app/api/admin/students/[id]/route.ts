@@ -61,7 +61,7 @@ export async function GET(
     const adminScope = await getAdminScope(permResult.session);
     const hasAccess = await isStudentInScope(
       student.degreeId,
-      student.degree.batch.id,
+      student.degree?.batch.id ?? null,
       adminScope,
     );
 
@@ -180,8 +180,8 @@ export async function GET(
       indexNumber: student.indexNumber,
       name: student.name,
       photoUrl: student.photoUrl,
-      batch: student.degree.batch.name,
-      degree: student.degree.name,
+      batch: student.degree?.batch.name ?? "Unassigned",
+      degree: student.degree?.name ?? "Unassigned",
       cgpa: Math.round(cgpa * 100) / 100,
       totalCredits: overallCredits, // This now reflects GPA credits
       totalPoints: Math.round(overallPoints * 100) / 100,
@@ -250,7 +250,7 @@ export async function PATCH(
     const adminScope = await getAdminScope(session);
     const hasAccess = await isStudentInScope(
       student.degreeId,
-      student.degree.batch.id,
+      student.degree?.batch.id ?? null,
       adminScope,
     );
 

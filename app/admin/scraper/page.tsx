@@ -45,6 +45,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Loader2,
   Download,
@@ -60,6 +61,7 @@ import {
   X,
   Pencil,
   Trash2,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +69,7 @@ import { useScrapedBatches } from "@/hooks/admin.hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRequireScrapePermission } from "@/hooks/useRequirePermission";
 import { AccessDenied } from "@/components/AccessDenied";
+import { parsePrefixMappingEntries } from "@/lib/degree-mapping";
 
 interface ProgressState {
   step: string;
@@ -120,6 +123,23 @@ export default function ScraperPage() {
     skippedCount?: number;
   } | null>(null);
   const [showPdfConfirm, setShowPdfConfirm] = useState(false);
+
+  // Prefix mapping state
+  const [prefixMappings, setPrefixMappings] = useState<
+    Array<{ prefixes: string; degree: string }>
+  >([{ prefixes: "", degree: "" }]);
+
+  // Degree assignment state for unmatched students
+  const [selectedStudentIndices, setSelectedStudentIndices] = useState<
+    Set<number>
+  >(new Set());
+  const [assignDegreeName, setAssignDegreeName] = useState("");
+  const [manualDegreeAssignments, setManualDegreeAssignments] = useState<
+    Record<string, { degreeName: string; batchName: string }>
+  >({});
+  const [existingDegrees, setExistingDegrees] = useState<
+    Array<{ id: string; name: string; batchName: string }>
+  >([]);
 
   const queryClient = useQueryClient();
   const { data: scrapedBatches = [], isLoading: isLoadingBatches } =
@@ -244,6 +264,133 @@ export default function ScraperPage() {
     return "bg-blue-100 text-blue-800 border-blue-200";
   };
 
+  // Prefix mapping handlers
+  const addPrefixMapping = () => {
+    setPrefixMappings((prev) => [...prev, { prefixes: "", degree: "" }]);
+  };
+
+  const removePrefixMapping = (index: number) => {
+    setPrefixMappings((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updatePrefixMapping = (
+    index: number,
+    field: "prefixes" | "degree",
+    value: string,
+  ) => {
+    setPrefixMappings((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  // Build prefix map from UI entries
+  const buildPrefixMap = () => {
+    return parsePrefixMappingEntries(prefixMappings);
+  };
+
+  // Fetch existing degrees for a batch
+  const fetchExistingDegrees = async (batchName: string) => {
+    try {
+      const response = await fetch(
+        `/api/degrees?batch=${encodeURIComponent(batchName)}`,
+      );
+      const data = await response.json();
+      if (data.success && data.degrees) {
+        setExistingDegrees(data.degrees);
+      }
+    } catch (error) {
+      console.error("Error fetching degrees:", error);
+    }
+  };
+
+  // Handle student checkbox selection
+  const toggleStudentSelection = (index: number) => {
+    setSelectedStudentIndices((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllUnmatched = () => {
+    const unmatchedIndices = pdfParsedStudents
+      .map((s, i) => ({ s, i }))
+      .filter(
+        ({ s }) => !s.inferredDegree && !manualDegreeAssignments[s.indexNumber],
+      )
+      .map(({ i }) => i);
+
+    const allSelected = unmatchedIndices.every((i) =>
+      selectedStudentIndices.has(i),
+    );
+
+    if (allSelected) {
+      setSelectedStudentIndices((prev) => {
+        const next = new Set(prev);
+        unmatchedIndices.forEach((i) => next.delete(i));
+        return next;
+      });
+    } else {
+      setSelectedStudentIndices((prev) => {
+        const next = new Set(prev);
+        unmatchedIndices.forEach((i) => next.add(i));
+        return next;
+      });
+    }
+  };
+
+  // Assign degree to selected students
+  const handleAssignDegree = () => {
+    if (!assignDegreeName.trim()) {
+      toast.error("Please enter or select a degree name");
+      return;
+    }
+    if (selectedStudentIndices.size === 0) {
+      toast.error("Please select at least one student");
+      return;
+    }
+
+    const newAssignments = { ...manualDegreeAssignments };
+    selectedStudentIndices.forEach((idx) => {
+      const student = pdfParsedStudents[idx];
+      if (student) {
+        // Use student's inferred batch or global batch
+        const batchName =
+          student.inferredBatch ||
+          (pdfBatchNumber
+            ? pdfBatchNumber.toLowerCase().startsWith("batch")
+              ? pdfBatchNumber
+              : `Batch ${pdfBatchNumber}`
+            : "");
+        newAssignments[student.indexNumber] = {
+          degreeName: assignDegreeName.trim().toUpperCase(),
+          batchName,
+        };
+      }
+    });
+
+    setManualDegreeAssignments(newAssignments);
+    setSelectedStudentIndices(new Set());
+    toast.success(
+      `Assigned ${assignDegreeName.trim().toUpperCase()} to ${selectedStudentIndices.size} student(s)`,
+    );
+  };
+
+  // Remove manual assignment
+  const removeManualAssignment = (indexNumber: string) => {
+    setManualDegreeAssignments((prev) => {
+      const next = { ...prev };
+      delete next[indexNumber];
+      return next;
+    });
+  };
+
   // PDF Upload handler
   const handlePDFUpload = async (action: "preview" | "save") => {
     if (!pdfFile) {
@@ -251,17 +398,22 @@ export default function ScraperPage() {
       return;
     }
 
-    // Optional validation: checking action === "save" but allow empty degree/batch for auto-mapping
-    // if (action === "save" && (!pdfDegree || !pdfBatchNumber)) {
-    //   toast.error("Please select batch and degree");
-    //   return;
-    // }
+    const prefixMap = buildPrefixMap();
 
     const formData = new FormData();
     formData.append("file", pdfFile);
     formData.append("action", action);
     if (pdfDegree) formData.append("degree", pdfDegree);
     if (pdfBatchNumber) formData.append("batch", pdfBatchNumber);
+    if (Object.keys(prefixMap).length > 0) {
+      formData.append("degreePrefixMap", JSON.stringify(prefixMap));
+    }
+    if (action === "save" && Object.keys(manualDegreeAssignments).length > 0) {
+      formData.append(
+        "manualDegreeAssignments",
+        JSON.stringify(manualDegreeAssignments),
+      );
+    }
 
     try {
       if (action === "preview") {
@@ -283,7 +435,26 @@ export default function ScraperPage() {
 
       if (action === "preview") {
         setPdfParsedStudents(data.students);
+        setSelectedStudentIndices(new Set());
+        setManualDegreeAssignments({});
         toast.success(`Found ${data.count} students in PDF`);
+
+        // Fetch existing degrees for relevant batches
+        const batches = new Set<string>();
+        data.students.forEach((s: any) => {
+          if (s.inferredBatch) batches.add(s.inferredBatch);
+        });
+        if (pdfBatchNumber) {
+          const bn = pdfBatchNumber.toLowerCase().startsWith("batch")
+            ? pdfBatchNumber
+            : `Batch ${pdfBatchNumber}`;
+          batches.add(bn);
+        }
+        // Fetch degrees for first batch only (they usually belong to same batch)
+        const firstBatch = [...batches][0];
+        if (firstBatch) {
+          fetchExistingDegrees(firstBatch);
+        }
       } else {
         setPdfResult({
           count: data.count,
@@ -293,6 +464,8 @@ export default function ScraperPage() {
         setPdfParsedStudents([]);
         setPdfFile(null);
         setShowPdfConfirm(false);
+        setManualDegreeAssignments({});
+        setSelectedStudentIndices(new Set());
         toast.success(data.message);
         // Invalidate cached data
         queryClient.invalidateQueries({
@@ -314,6 +487,8 @@ export default function ScraperPage() {
     setPdfFile(null);
     setPdfParsedStudents([]);
     setPdfResult(null);
+    setSelectedStudentIndices(new Set());
+    setManualDegreeAssignments({});
   };
 
   const handleEditClick = (index: number, student: any) => {
@@ -504,40 +679,19 @@ export default function ScraperPage() {
           <div className="mb-4 text-xs text-muted-foreground p-2 bg-muted/50 rounded flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>
-              If Degree or Batch is left empty, the system will try to
-              auto-detect them from the Student Index Number (e.g. 240xxx →
-              Batch 24, IT).
+              Batch is auto-detected from index number (e.g. 240xxx → Batch 24).
+              Define prefix-to-degree mappings below, or assign degrees manually
+              after preview.
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="pdfDegree">
-                Degree{" "}
-                <span className="text-muted-foreground font-normal">
-                  (Optional)
-                </span>
-              </Label>
-              <Select
-                value={pdfDegree}
-                onValueChange={setPdfDegree}
-                disabled={isPdfLoading || isPdfSaving}
-              >
-                <SelectTrigger id="pdfDegree">
-                  <SelectValue placeholder="Auto-detect from Index" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="it">IT</SelectItem>
-                  <SelectItem value="itm">ITM</SelectItem>
-                  <SelectItem value="ai">AI</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
+          {/* Row 1: Batch + File */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="space-y-2">
               <Label htmlFor="pdfBatchNumber">
                 Batch Number{" "}
                 <span className="text-muted-foreground font-normal">
-                  (Optional)
+                  (Optional — auto-detected from index)
                 </span>
               </Label>
               <Input
@@ -581,6 +735,102 @@ export default function ScraperPage() {
             </div>
           </div>
 
+          {/* Row 2: Global Degree Override (Optional) */}
+          <div className="mb-4">
+            <div className="space-y-2">
+              <Label htmlFor="pdfDegree">
+                Global Degree Override{" "}
+                <span className="text-muted-foreground font-normal">
+                  (Optional — applies same degree to ALL students, overrides
+                  prefix mapping)
+                </span>
+              </Label>
+              <div className="max-w-xs">
+                <Select
+                  value={pdfDegree}
+                  onValueChange={setPdfDegree}
+                  disabled={isPdfLoading || isPdfSaving}
+                >
+                  <SelectTrigger id="pdfDegree">
+                    <SelectValue placeholder="Use prefix mapping instead" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      — None (use prefix mapping) —
+                    </SelectItem>
+                    <SelectItem value="it">IT</SelectItem>
+                    <SelectItem value="itm">ITM</SelectItem>
+                    <SelectItem value="ai">AI</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 3: Degree Prefix Mapping (Optional) */}
+          {(!pdfDegree || pdfDegree === "none") && (
+            <div className="mb-4 p-4 border rounded-lg bg-muted/30">
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-sm font-semibold">
+                  Degree Prefix Mapping{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (Optional)
+                  </span>
+                </Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addPrefixMapping}
+                  disabled={isPdfLoading || isPdfSaving}
+                  className="gap-1"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add Row
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                Map 3-digit index prefixes to degree names. E.g., prefixes "240,
+                241, 242" → degree "IT"
+              </p>
+              <div className="space-y-2">
+                {prefixMappings.map((mapping, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Input
+                      placeholder="Prefixes (e.g. 240, 241, 242)"
+                      value={mapping.prefixes}
+                      onChange={(e) =>
+                        updatePrefixMapping(idx, "prefixes", e.target.value)
+                      }
+                      disabled={isPdfLoading || isPdfSaving}
+                      className="flex-1"
+                    />
+                    <span className="text-muted-foreground text-sm">→</span>
+                    <Input
+                      placeholder="Degree (e.g. IT)"
+                      value={mapping.degree}
+                      onChange={(e) =>
+                        updatePrefixMapping(idx, "degree", e.target.value)
+                      }
+                      disabled={isPdfLoading || isPdfSaving}
+                      className="w-32"
+                    />
+                    {prefixMappings.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => removePrefixMapping(idx)}
+                        disabled={isPdfLoading || isPdfSaving}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {pdfFile && (
             <div className="mt-4 flex gap-2">
               <Button
@@ -605,7 +855,7 @@ export default function ScraperPage() {
               {pdfParsedStudents.length > 0 && (
                 <Button
                   onClick={() => setShowPdfConfirm(true)}
-                  disabled={isPdfSaving || !pdfDegree || !pdfBatchNumber}
+                  disabled={isPdfSaving}
                   className="gap-2"
                 >
                   <Upload className="h-4 w-4" />
@@ -615,57 +865,226 @@ export default function ScraperPage() {
             </div>
           )}
 
-          {/* Preview Table - Shows ALL students */}
+          {/* Preview Table - Shows ALL students with inferred degree/batch */}
           {pdfParsedStudents.length > 0 && (
             <div className="mt-4">
-              <p className="text-sm font-medium mb-2">
-                Found {pdfParsedStudents.length} students:
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium">
+                  Found {pdfParsedStudents.length} students:
+                </p>
+                {pdfParsedStudents.some(
+                  (s) =>
+                    !s.inferredDegree &&
+                    !manualDegreeAssignments[s.indexNumber],
+                ) && (
+                  <Badge
+                    variant="outline"
+                    className="text-orange-600 border-orange-300"
+                  >
+                    {
+                      pdfParsedStudents.filter(
+                        (s) =>
+                          !s.inferredDegree &&
+                          !manualDegreeAssignments[s.indexNumber],
+                      ).length
+                    }{" "}
+                    unmatched
+                  </Badge>
+                )}
+              </div>
               <div className="rounded-lg border max-h-96 overflow-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50 sticky top-0">
-                      <TableHead className="w-16">#</TableHead>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={
+                            pdfParsedStudents.some(
+                              (s) =>
+                                !s.inferredDegree &&
+                                !manualDegreeAssignments[s.indexNumber],
+                            ) &&
+                            pdfParsedStudents
+                              .map((s, i) => ({ s, i }))
+                              .filter(
+                                ({ s }) =>
+                                  !s.inferredDegree &&
+                                  !manualDegreeAssignments[s.indexNumber],
+                              )
+                              .every(({ i }) => selectedStudentIndices.has(i))
+                          }
+                          onCheckedChange={() => toggleAllUnmatched()}
+                        />
+                      </TableHead>
+                      <TableHead className="w-12">#</TableHead>
                       <TableHead>Reg. No</TableHead>
                       <TableHead>Name</TableHead>
+                      <TableHead>Batch</TableHead>
+                      <TableHead>Degree</TableHead>
                       <TableHead className="w-20">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pdfParsedStudents.map((student, idx) => (
-                      <TableRow key={student.indexNumber}>
-                        <TableCell className="text-muted-foreground">
-                          {idx + 1}
-                        </TableCell>
-                        <TableCell className="font-mono font-medium">
-                          {student.indexNumber}
-                        </TableCell>
-                        <TableCell>{student.name || "—"}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleEditClick(idx, student)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteStudent(idx)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {pdfParsedStudents.map((student, idx) => {
+                      const manualAssignment =
+                        manualDegreeAssignments[student.indexNumber];
+                      const hasDegree =
+                        student.inferredDegree || manualAssignment;
+                      const displayDegree = manualAssignment
+                        ? manualAssignment.degreeName
+                        : student.inferredDegree;
+
+                      return (
+                        <TableRow
+                          key={student.indexNumber}
+                          className={!hasDegree ? "bg-orange-50" : ""}
+                        >
+                          <TableCell>
+                            {!hasDegree ? (
+                              <Checkbox
+                                checked={selectedStudentIndices.has(idx)}
+                                onCheckedChange={() =>
+                                  toggleStudentSelection(idx)
+                                }
+                              />
+                            ) : manualAssignment ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() =>
+                                  removeManualAssignment(student.indexNumber)
+                                }
+                                title="Remove assignment"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            ) : null}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {idx + 1}
+                          </TableCell>
+                          <TableCell className="font-mono font-medium">
+                            {student.indexNumber}
+                          </TableCell>
+                          <TableCell>{student.name || "—"}</TableCell>
+                          <TableCell>
+                            {student.inferredBatch ? (
+                              <Badge variant="secondary" className="text-xs">
+                                {student.inferredBatch}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {displayDegree ? (
+                              <Badge
+                                variant={
+                                  manualAssignment ? "default" : "secondary"
+                                }
+                                className={`text-xs ${
+                                  manualAssignment
+                                    ? "bg-blue-100 text-blue-800 border-blue-200"
+                                    : ""
+                                }`}
+                              >
+                                {displayDegree}
+                                {manualAssignment && " ✎"}
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-xs text-orange-600 border-orange-300"
+                              >
+                                No Match
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleEditClick(idx, student)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteStudent(idx)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Degree Assignment Section - for unmatched students */}
+              {pdfParsedStudents.some(
+                (s) =>
+                  !s.inferredDegree && !manualDegreeAssignments[s.indexNumber],
+              ) && (
+                <div className="mt-4 p-4 border border-orange-200 rounded-lg bg-orange-50">
+                  <p className="text-sm font-semibold mb-3 text-orange-800">
+                    Assign Degree to Unmatched Students
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Select students using the checkboxes above, then choose or
+                    create a degree to assign.
+                  </p>
+                  <div className="flex items-end gap-3">
+                    <div className="space-y-1 flex-1">
+                      <Label className="text-xs">Degree Name</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter degree name (e.g. IT, ITM, AI)"
+                          value={assignDegreeName}
+                          onChange={(e) => setAssignDegreeName(e.target.value)}
+                          className="flex-1"
+                        />
+                        {existingDegrees.length > 0 && (
+                          <Select
+                            value=""
+                            onValueChange={(val) => setAssignDegreeName(val)}
+                          >
+                            <SelectTrigger className="w-48">
+                              <SelectValue placeholder="Or pick existing" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {existingDegrees.map((d) => (
+                                <SelectItem key={d.id} value={d.name}>
+                                  {d.name} ({d.batchName})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleAssignDegree}
+                      disabled={
+                        selectedStudentIndices.size === 0 ||
+                        !assignDegreeName.trim()
+                      }
+                      className="gap-2"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      Assign to {selectedStudentIndices.size} Student
+                      {selectedStudentIndices.size !== 1 ? "s" : ""}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -676,8 +1095,7 @@ export default function ScraperPage() {
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
                 <div>
                   <p className="font-medium text-green-800">
-                    Successfully added {pdfResult.count} students to{" "}
-                    {pdfDegree.toUpperCase()} Batch {pdfBatchNumber}
+                    Successfully added {pdfResult.count} students
                   </p>
                   {pdfResult.skippedCount && pdfResult.skippedCount > 0 && (
                     <p className="text-sm text-green-700">
@@ -908,15 +1326,41 @@ export default function ScraperPage() {
               <div>
                 <p className="mb-4">
                   You are about to add{" "}
-                  <strong>{pdfParsedStudents.length} students</strong> to:
+                  <strong>{pdfParsedStudents.length} students</strong> to the
+                  database.
                 </p>
-                <div className="p-3 bg-muted rounded-lg mb-4">
-                  <p>
-                    <strong>Batch:</strong> Batch {pdfBatchNumber}
-                  </p>
-                  <p>
-                    <strong>Degree:</strong> {pdfDegree.toUpperCase()}
-                  </p>
+                <div className="p-3 bg-muted rounded-lg mb-4 space-y-1 text-sm">
+                  {(() => {
+                    // Calculate degree breakdown
+                    const degreeBreakdown: Record<string, number> = {};
+                    let nullCount = 0;
+                    pdfParsedStudents.forEach((s) => {
+                      const manual = manualDegreeAssignments[s.indexNumber];
+                      const deg = manual ? manual.degreeName : s.inferredDegree;
+                      if (deg) {
+                        degreeBreakdown[deg] = (degreeBreakdown[deg] || 0) + 1;
+                      } else {
+                        nullCount++;
+                      }
+                    });
+                    return (
+                      <>
+                        {Object.entries(degreeBreakdown).map(([deg, count]) => (
+                          <p key={deg}>
+                            <strong>{deg}:</strong> {count} student
+                            {count !== 1 ? "s" : ""}
+                          </p>
+                        ))}
+                        {nullCount > 0 && (
+                          <p className="text-orange-600">
+                            <strong>Unassigned:</strong> {nullCount} student
+                            {nullCount !== 1 ? "s" : ""} (will be saved without
+                            degree)
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Students with registration numbers that already exist in the

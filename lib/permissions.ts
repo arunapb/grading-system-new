@@ -167,8 +167,8 @@ export async function getAdminScope(session: any): Promise<
  * Uses AND logic: student must match BOTH batch AND degree restrictions if both are defined.
  */
 export async function isStudentInScope(
-  studentDegreeId: string,
-  studentBatchId: string,
+  studentDegreeId: string | null,
+  studentBatchId: string | null,
   adminScope:
     | { allowedBatches: string[]; allowedDegrees: string[] }
     | undefined,
@@ -183,6 +183,9 @@ export async function isStudentInScope(
 
   // If no restrictions at all, allow access
   if (!hasBatchRestrictions && !hasDegreeRestrictions) return true;
+
+  // If student has no degree/batch assigned, deny access for restricted admins
+  if (!studentDegreeId || !studentBatchId) return false;
 
   // Check batch restriction (if any)
   const batchAllowed =

@@ -35,8 +35,12 @@ async function main() {
       console.log(`- ID: ${s.id}`);
       console.log(`  Name: ${s.name}`);
       console.log(`  Index: ${s.indexNumber}`);
-      console.log(`  Degree: ${s.degree.name} (ID: ${s.degree.id})`);
-      console.log(`  Batch: ${s.degree.batch.name} (ID: ${s.degree.batchId})`);
+      console.log(
+        `  Degree: ${s.degree?.name ?? "Unassigned"} (ID: ${s.degree?.id ?? "N/A"})`,
+      );
+      console.log(
+        `  Batch: ${s.degree?.batch.name ?? "Unassigned"} (ID: ${s.degree?.batchId ?? "N/A"})`,
+      );
     });
   }
 }

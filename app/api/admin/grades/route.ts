@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const adminScope = await getAdminScope(session);
     const hasAccess = await isStudentInScope(
       student.degreeId,
-      student.degree.batch.id,
+      student.degree?.batch.id ?? null,
       adminScope,
     );
 
@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
       const adminScope = await getAdminScope(session);
       const hasAccess = await isStudentInScope(
         student.degreeId,
-        student.degree.batch.id,
+        student.degree?.batch.id ?? null,
         adminScope,
       );
 
@@ -274,7 +274,7 @@ export async function DELETE(request: NextRequest) {
     const adminScope = await getAdminScope(session);
     const hasAccess = await isStudentInScope(
       gradeRecord.student.degreeId,
-      gradeRecord.student.degree.batch.id,
+      gradeRecord.student.degree?.batch.id ?? null,
       adminScope,
     );
 

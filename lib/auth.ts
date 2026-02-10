@@ -39,8 +39,8 @@ export async function validateStudent(
       return {
         indexNumber: student.indexNumber,
         name: student.name,
-        batch: student.degree.batch.name,
-        degree: student.degree.name,
+        batch: student.degree?.batch.name ?? "",
+        degree: student.degree?.name ?? "",
         status: student.status,
         role: "STUDENT",
       };

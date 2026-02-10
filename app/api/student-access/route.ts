@@ -114,8 +114,8 @@ export async function POST(request: NextRequest) {
     // Get full student details with grades
     const studentDetails = await getStudentDetails(
       student.indexNumber,
-      student.degree.batch.name,
-      student.degree.name,
+      student.degree?.batch.name,
+      student.degree?.name,
     );
 
     return NextResponse.json({
