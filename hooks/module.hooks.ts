@@ -7,6 +7,15 @@ export interface Module {
   name: string;
   credits: number;
   semesterId: string;
+  semester?: {
+    number: number;
+    year: {
+      number: number;
+      degree: {
+        name: string;
+      };
+    };
+  };
 }
 
 interface ModulesResponse {
@@ -15,15 +24,24 @@ interface ModulesResponse {
   error?: string;
 }
 
-export function useModules(semesterId: string | null) {
+export function useModules(
+  filters: { semesterId?: string; batch?: string; degree?: string } | null,
+) {
   return useQuery({
-    queryKey: ["modules", semesterId],
+    queryKey: ["modules", filters],
     queryFn: async () => {
-      if (!semesterId) return [];
+      if (!filters?.semesterId && !filters?.batch && !filters?.degree) {
+        return [];
+      }
 
-      const response = await fetch(
-        `/api/admin/modules?semesterId=${semesterId}`,
-      );
+      const params = new URLSearchParams();
+      if (filters.semesterId) params.append("semesterId", filters.semesterId);
+      if (filters.batch && filters.batch !== "all")
+        params.append("batch", filters.batch);
+      if (filters.degree && filters.degree !== "all")
+        params.append("degree", filters.degree);
+
+      const response = await fetch(`/api/admin/modules?${params.toString()}`);
       if (!response.ok) {
         throw new Error("Failed to fetch modules");
       }
@@ -33,7 +51,7 @@ export function useModules(semesterId: string | null) {
       }
       return data.modules;
     },
-    enabled: !!semesterId,
+    enabled: !!(filters?.semesterId || filters?.batch || filters?.degree),
   });
 }
 

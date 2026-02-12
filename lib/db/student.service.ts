@@ -216,6 +216,7 @@ export async function getAllStudentsWithCGPA(
       }
 
       return {
+        id: student.id,
         indexNumber: student.indexNumber,
         name: student.name,
         photoUrl,

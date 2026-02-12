@@ -24,14 +24,11 @@ export async function GET(request: Request) {
     }
 
     if (batch || degree) {
-      // Import getAllModules dynamically or at top if possible, but replace_file_content target is local.
-      // I need to check imports. getModulesBySemester is imported. getAllModules is likely exported from same file.
-      // I will update imports first in next step if needed, but let's see.
-      // Assuming getAllModules is imported or I can add it.
-      // Wait, I should add the import first.
-      // Let's just do the logic update here and hope I can update imports in a separate call or same call if I target wider.
-      // I'll target the whole file or just the top import to be safe.
-      // Actually, let's just replace the GET function efficiently, and add import.
+      const modules = await getAllModules(
+        batch || undefined,
+        degree || undefined,
+      );
+      return NextResponse.json({ success: true, modules });
     }
 
     return NextResponse.json(

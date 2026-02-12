@@ -1,10 +1,28 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const batch = searchParams.get("batch");
+    const degree = searchParams.get("degree");
+
+    // Build where clause for filtering
+    const where: any = {};
+    if (batch || degree) {
+      where.semester = {
+        year: {
+          degree: {
+            ...(degree ? { name: degree } : {}),
+            ...(batch ? { batch: { name: batch } } : {}),
+          },
+        },
+      };
+    }
+
     // Fetch all modules with their grades and semester info
     const modules = await prisma.module.findMany({
+      where,
       include: {
         semester: {
           include: {
