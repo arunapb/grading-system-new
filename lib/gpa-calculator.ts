@@ -93,7 +93,7 @@ export function calculateSGPA(modules: ModuleGrade[]): number {
   }
 
   return totalCredits > 0
-    ? Number.parseFloat((totalPoints / totalCredits).toFixed(2))
+    ? Number.parseFloat((totalPoints / totalCredits).toFixed(4))
     : 0;
 }
 
@@ -146,8 +146,8 @@ export function getPredictedClass(gpa: number): string {
  * Format GPA for display (standardized to 2 decimal places)
  */
 export function formatGPA(gpa: number): string {
-  if (Number.isNaN(gpa)) return "0.00";
-  return gpa.toFixed(2);
+  if (Number.isNaN(gpa)) return "0.0000";
+  return gpa.toFixed(4);
 }
 
 /**

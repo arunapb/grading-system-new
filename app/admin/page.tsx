@@ -82,8 +82,8 @@ export default function AdminDashboard() {
     data?.batches.map((batch) => ({
       name: batch.name,
       students: batch.studentCount,
-      avgCGPA: parseFloat(batch.averageCGPA.toFixed(2)),
-      topGPA: parseFloat(batch.topGPA.toFixed(2)),
+      avgCGPA: parseFloat(batch.averageCGPA.toFixed(4)),
+      topGPA: parseFloat(batch.topGPA.toFixed(4)),
     })) || [];
 
   return (

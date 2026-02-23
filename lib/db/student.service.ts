@@ -199,7 +199,7 @@ export async function getAllStudentsWithCGPA(
       );
       const cgpa =
         totalCredits > 0
-          ? parseFloat((totalPoints / totalCredits).toFixed(2))
+          ? parseFloat((totalPoints / totalCredits).toFixed(4))
           : 0;
 
       let photoUrl = student.photoUrl;
@@ -270,7 +270,7 @@ export async function getStudentDetails(
       );
       const sgpa =
         totalCredits > 0
-          ? parseFloat((totalPoints / totalCredits).toFixed(2))
+          ? parseFloat((totalPoints / totalCredits).toFixed(4))
           : 0;
 
       return {
@@ -311,7 +311,7 @@ export async function getStudentDetails(
     0,
   );
   const cgpa =
-    totalCredits > 0 ? parseFloat((totalPoints / totalCredits).toFixed(2)) : 0;
+    totalCredits > 0 ? parseFloat((totalPoints / totalCredits).toFixed(4)) : 0;
 
   // Get rank
   // Use the student's actual batch and degree for ranking, not the optional params which might be missing
