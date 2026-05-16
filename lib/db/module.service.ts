@@ -24,11 +24,22 @@ export async function getModulesBySemester(semesterId: string) {
 
 export async function updateModule(
   id: string,
-  data: { code?: string; name?: string; credits?: number },
+  data: { code?: string; name?: string; credits?: number; semesterId?: string },
 ) {
   return prisma.module.update({
     where: { id },
     data,
+    include: {
+      semester: {
+        include: {
+          year: {
+            include: {
+              degree: true,
+            },
+          },
+        },
+      },
+    },
   });
 }
 

@@ -11,7 +11,9 @@ export interface Module {
     number: number;
     year: {
       number: number;
+      degreeId: string;
       degree: {
+        id: string;
         name: string;
       };
     };
@@ -64,7 +66,13 @@ export function useUpdateModule() {
       data,
     }: {
       id: string;
-      data: { code?: string; name?: string; credits?: number };
+      data: {
+        code?: string;
+        name?: string;
+        credits?: number;
+        yearNumber?: number;
+        semesterNumber?: number;
+      };
     }) => {
       const response = await fetch(`/api/admin/modules/${id}`, {
         method: "PUT",

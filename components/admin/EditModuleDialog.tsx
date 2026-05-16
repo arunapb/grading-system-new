@@ -9,6 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +36,8 @@ export function EditModuleDialog({
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [credits, setCredits] = useState<number | string>("");
+  const [yearNumber, setYearNumber] = useState<string>("");
+  const [semesterNumber, setSemesterNumber] = useState<string>("");
   const updateModule = useUpdateModule();
 
   useEffect(() => {
@@ -36,6 +45,8 @@ export function EditModuleDialog({
       setCode(module.code);
       setName(module.name);
       setCredits(module.credits);
+      setYearNumber(String(module.semester?.year?.number ?? ""));
+      setSemesterNumber(String(module.semester?.number ?? ""));
     }
   }, [module]);
 
@@ -49,6 +60,8 @@ export function EditModuleDialog({
         code: code.trim().toUpperCase(),
         name: name.trim(),
         credits: Number(credits),
+        yearNumber: yearNumber ? Number(yearNumber) : undefined,
+        semesterNumber: semesterNumber ? Number(semesterNumber) : undefined,
       },
     });
     onOpenChange(false);
@@ -98,6 +111,42 @@ export function EditModuleDialog({
                 onChange={(e) => setCredits(e.target.value)}
                 disabled={updateModule.isPending}
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Year</Label>
+                <Select
+                  value={yearNumber}
+                  onValueChange={setYearNumber}
+                  disabled={updateModule.isPending}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Year 1</SelectItem>
+                    <SelectItem value="2">Year 2</SelectItem>
+                    <SelectItem value="3">Year 3</SelectItem>
+                    <SelectItem value="4">Year 4</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Semester</Label>
+                <Select
+                  value={semesterNumber}
+                  onValueChange={setSemesterNumber}
+                  disabled={updateModule.isPending}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select semester" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Semester 1</SelectItem>
+                    <SelectItem value="2">Semester 2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
           <DialogFooter>

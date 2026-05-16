@@ -53,3 +53,19 @@ export async function deleteSemester(id: string) {
     where: { id },
   });
 }
+
+export async function findSemesterByYearAndSemesterNumber(
+  degreeId: string,
+  yearNumber: number,
+  semesterNumber: number,
+) {
+  return prisma.semester.findFirst({
+    where: {
+      number: semesterNumber,
+      year: {
+        number: yearNumber,
+        degreeId,
+      },
+    },
+  });
+}
